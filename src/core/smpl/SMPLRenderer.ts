@@ -138,6 +138,10 @@ export class SMPLRenderer {
       }
       this.smplModelData = await response.json()
       console.log('SMPL model loaded:', this.smplModelData?.num_vertices, 'vertices')
+
+      // 创建人体网格
+      this.createHumanMesh()
+      console.log('SMPL mesh created')
     } catch (error) {
       console.error('Failed to load SMPL model:', error)
       throw error
