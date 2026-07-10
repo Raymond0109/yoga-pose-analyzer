@@ -1497,43 +1497,58 @@ export const useAppStore = create<AppState>((set) => ({
 
 ### Phase 1.7: 体式数据质量提升与来源拓展 (新增)
 
-| 任务 | 优先级 | 预估工时 |
-|------|--------|----------|
-| 体式坐标z轴深度校准 | P0 | 2天 |
-| 常用10个体式验证 | P0 | 2天 |
-| 学术数据集集成 | P1 | 3天 |
-| SMPL模型标准数据 | P1 | 3天 |
-| 动作捕捉数据库参考 | P2 | 2天 |
+| 任务 | 优先级 | 预估工时 | 状态 |
+|------|--------|----------|------|
+| 体式坐标z轴深度校准 | P0 | 2天 | ✅ 完成 |
+| 常用10个体式验证 | P0 | 2天 | ✅ 完成 |
+| 学术数据集集成 | P1 | 3天 | 待开始 |
+| SMPL模型标准数据 | P1 | 3天 | 待开始 |
+| 动作捕捉数据库参考 | P2 | 2天 | 待开始 |
 
 **详细说明**：
 
-#### 1. 体式坐标z轴深度校准
+#### 1. 体式坐标z轴深度校准 ✅
 - 当前数据库z轴信息不足，大部分体式z=0或简单估计
 - 补充每个体式的z轴深度信息
 - 建立z轴深度的估算规则（基于体式描述和解剖学知识）
 - 参考：身体前侧z>0，后侧z<0，中线z=0
+- **完成情况**：27个体式全部添加z轴深度信息
 
-#### 2. 常用10个体式验证
+#### 2. 常用10个体式验证 ✅
 - 重点验证：山式、战士二式、三角式、下犬式、树式、幻椅式、眼镜蛇式、桥式、平板式、船式
 - 对比实际视频中的关键点位置
 - 调整偏差较大的坐标值
+- **完成情况**：10个体式全部通过验证（骨骼长度、脊柱长度、z轴深度）
+- **验证脚本**：`scripts/verify-poses.js`
 
 #### 3. 学术数据集集成
 - **Yoga-82**: 82类瑜伽体式，含标签 (https://sites.google.com/view/yoga-82/home)
 - **Yoga-107**: 107类体式，5994张图像 (https://github.com/dhirensr/yoga-poses-dataset)
 - **AI Trainer Dataset**: 运动姿态关键点 (https://github.com/stonet2000/ai-trainer-dataset)
+- **Fitness Landmark Dataset**: Kaggle运动关键点数据集
 - 用途：获取真实人体的关键点参考数据
 
 #### 4. SMPL模型标准数据
 - SMPL官方模型 (https://smpl.is.tue.mpg.de) - 参数化人体模板
 - AMASS数据集 (https://amass.is.tue.mpg.de) - 大规模动作捕捉数据
+- **SKEL模型** (https://skel.is.tuebingen.mpg.de) - 生物力学准确骨骼模型
+- **STAR模型** (https://star.is.tue.mpg.de) - SMPL轻量替代
 - 用途：建立标准化的人体关键点坐标系
 
 #### 5. 动作捕捉数据库参考
 - CMU MoCap (http://mocap.cs.cmu.edu/) - 卡内基梅隆动作捕捉
 - Human3.6M (https://vision.imarobots.hu/h36m/) - 大规模人体姿态数据
 - MPI-FAUST (https://faust.is.tue.mpg.de/) - 人体扫描数据集
+- **H36M数据集** - 360万帧人体运动数据
 - 用途：获取真实运动数据作为参考
+
+#### 6. 解剖学与瑜伽教学资源 (新增)
+- **Complete Anatomy** - 3D解剖学应用，肌肉骨骼参考
+- **Anatomy 360** - 专业解剖学渲染，视觉参考
+- **Visible Body** - 人体3D模型，关节活动范围参考
+- **OpenSim** - 生物力学模拟软件，肌肉张力计算参考
+- **Yoga International** - 专业瑜伽教学平台
+- **Yoga Journal** - 瑜伽杂志，体式详解
 
 **详细调研报告**：`docs/pose-data-analysis.md`
 
