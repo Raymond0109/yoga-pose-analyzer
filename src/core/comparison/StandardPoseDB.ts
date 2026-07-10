@@ -400,14 +400,264 @@ const savasana: StandardPoseData = {
   },
 }
 
+// ============================================================
+// 新增体式（来自 Hello Yogis 瑜珈動作大全）
+// ============================================================
+
+/** 战士一式：前腿弓步，双臂上举 */
+const virabhadrasana_i: StandardPoseData = {
+  id: 'virabhadrasana_i',
+  nameCN: '战士一式',
+  nameEN: 'Warrior I',
+  difficulty: 'intermediate',
+  landmarks: (() => {
+    const lm = cloneLandmarks(STANDING_BASE)
+    lm[23] = { x: -0.15, y: 0.65, z: 0.1 }
+    lm[24] = { x: 0.15, y: 0.65, z: -0.1 }
+    lm[25] = { x: -0.2, y: 0.5, z: 0.15 }
+    lm[26] = { x: 0.15, y: 0.45, z: -0.2 }
+    lm[27] = { x: -0.2, y: 0.05, z: 0.1 }
+    lm[28] = { x: 0.15, y: 0.05, z: -0.3 }
+    lm[13] = { x: -0.1, y: 1.5, z: 0 }
+    lm[15] = { x: -0.08, y: 1.7, z: 0 }
+    lm[14] = { x: 0.1, y: 1.5, z: 0 }
+    lm[16] = { x: 0.08, y: 1.7, z: 0 }
+    return lm
+  })(),
+  jointAngles: {
+    left_knee: 90, right_knee: 175,
+    left_hip: 95, right_hip: 160,
+    left_shoulder: 175, right_shoulder: 175,
+  },
+}
+
+/** 战士三式：单腿站立，身体和腿呈T形 */
+const virabhadrasana_iii: StandardPoseData = {
+  id: 'virabhadrasana_iii',
+  nameCN: '战士三式',
+  nameEN: 'Warrior III',
+  difficulty: 'advanced',
+  landmarks: (() => {
+    const lm = cloneLandmarks(STANDING_BASE)
+    lm[23] = { x: -0.1, y: 0.7, z: 0 }
+    lm[24] = { x: 0.1, y: 0.7, z: 0 }
+    lm[25] = { x: -0.1, y: 0.45, z: 0 }
+    lm[26] = { x: 0.3, y: 0.75, z: -0.2 }
+    lm[27] = { x: -0.1, y: 0.05, z: 0 }
+    lm[28] = { x: 0.5, y: 0.8, z: -0.3 }
+    lm[11] = { x: -0.2, y: 1.2, z: 0.2 }
+    lm[12] = { x: 0.2, y: 1.2, z: 0.2 }
+    lm[13] = { x: -0.2, y: 1.1, z: 0.4 }
+    lm[15] = { x: -0.2, y: 1.0, z: 0.6 }
+    lm[14] = { x: 0.2, y: 1.1, z: 0.4 }
+    lm[16] = { x: 0.2, y: 1.0, z: 0.6 }
+    lm[0] = { x: 0, y: 1.1, z: 0.2 }
+    return lm
+  })(),
+  jointAngles: {
+    left_knee: 175, right_knee: 175,
+    left_hip: 170, right_hip: 170,
+    left_shoulder: 170, right_shoulder: 170,
+  },
+}
+
+/** 桥式：仰卧，臀部抬起 */
+const setu_bandhasana: StandardPoseData = {
+  id: 'setu_bandhasana',
+  nameCN: '桥式',
+  nameEN: 'Bridge Pose',
+  difficulty: 'beginner',
+  landmarks: (() => {
+    const lm = cloneLandmarks(STANDING_BASE)
+    lm[0] = { x: 0, y: 0.2, z: -0.15 }
+    lm[11] = { x: -0.2, y: 0.2, z: 0 }
+    lm[12] = { x: 0.2, y: 0.2, z: 0 }
+    lm[23] = { x: -0.1, y: 0.5, z: 0 }
+    lm[24] = { x: 0.1, y: 0.5, z: 0 }
+    lm[25] = { x: -0.2, y: 0.35, z: 0.2 }
+    lm[26] = { x: 0.2, y: 0.35, z: 0.2 }
+    lm[27] = { x: -0.2, y: 0.1, z: 0.3 }
+    lm[28] = { x: 0.2, y: 0.1, z: 0.3 }
+    lm[13] = { x: -0.25, y: 0.15, z: 0 }
+    lm[15] = { x: -0.15, y: 0.15, z: 0.1 }
+    lm[14] = { x: 0.25, y: 0.15, z: 0 }
+    lm[16] = { x: 0.15, y: 0.15, z: 0.1 }
+    return lm
+  })(),
+  jointAngles: {
+    left_knee: 100, right_knee: 100,
+    left_hip: 120, right_hip: 120,
+    left_shoulder: 170, right_shoulder: 170,
+  },
+}
+
+/** 骆驼式：跪立，身体后弯 */
+const ustrasana: StandardPoseData = {
+  id: 'ustrasana',
+  nameCN: '骆驼式',
+  nameEN: 'Camel Pose',
+  difficulty: 'beginner',
+  landmarks: (() => {
+    const lm = cloneLandmarks(STANDING_BASE)
+    lm[0] = { x: 0, y: 1.3, z: -0.2 }
+    lm[11] = { x: -0.2, y: 1.1, z: -0.1 }
+    lm[12] = { x: 0.2, y: 1.1, z: -0.1 }
+    lm[23] = { x: -0.1, y: 0.6, z: 0 }
+    lm[24] = { x: 0.1, y: 0.6, z: 0 }
+    lm[25] = { x: -0.15, y: 0.4, z: 0.1 }
+    lm[26] = { x: 0.15, y: 0.4, z: 0.1 }
+    lm[27] = { x: -0.15, y: 0.15, z: 0 }
+    lm[28] = { x: 0.15, y: 0.15, z: 0 }
+    lm[13] = { x: -0.2, y: 0.5, z: 0.1 }
+    lm[15] = { x: -0.2, y: 0.5, z: 0.15 }
+    lm[14] = { x: 0.2, y: 0.5, z: 0.1 }
+    lm[16] = { x: 0.2, y: 0.5, z: 0.15 }
+    return lm
+  })(),
+  jointAngles: {
+    left_knee: 100, right_knee: 100,
+    left_hip: 150, right_hip: 150,
+    left_shoulder: 130, right_shoulder: 130,
+  },
+}
+
+/** 侧角伸展式：侧弓步，手臂伸展 */
+const utthita_parsvakonasana: StandardPoseData = {
+  id: 'utthita_parsvakonasana',
+  nameCN: '侧角伸展式',
+  nameEN: 'Extended Side Angle',
+  difficulty: 'intermediate',
+  landmarks: (() => {
+    const lm = cloneLandmarks(STANDING_BASE)
+    lm[23] = { x: -0.2, y: 0.6, z: 0.1 }
+    lm[24] = { x: 0.2, y: 0.8, z: -0.1 }
+    lm[25] = { x: -0.25, y: 0.5, z: 0.15 }
+    lm[26] = { x: 0.2, y: 0.45, z: -0.1 }
+    lm[11] = { x: -0.15, y: 1.0, z: 0 }
+    lm[12] = { x: 0.2, y: 1.1, z: 0 }
+    lm[13] = { x: -0.2, y: 0.7, z: 0.1 }
+    lm[15] = { x: -0.15, y: 0.5, z: 0.15 }
+    lm[14] = { x: 0.3, y: 1.3, z: -0.1 }
+    lm[16] = { x: 0.5, y: 1.5, z: -0.15 }
+    lm[0] = { x: 0, y: 1.1, z: 0 }
+    return lm
+  })(),
+  jointAngles: {
+    left_knee: 90, right_knee: 175,
+    left_hip: 95, right_hip: 140,
+    left_shoulder: 120, right_shoulder: 40,
+  },
+}
+
+/** 平板式：俯卧撑位置 */
+const plank: StandardPoseData = {
+  id: 'plank',
+  nameCN: '平板式',
+  nameEN: 'Plank Pose',
+  difficulty: 'intermediate',
+  landmarks: (() => {
+    const lm = cloneLandmarks(STANDING_BASE)
+    lm[0] = { x: 0, y: 0.8, z: 0.3 }
+    lm[11] = { x: -0.2, y: 0.8, z: 0.3 }
+    lm[12] = { x: 0.2, y: 0.8, z: 0.3 }
+    lm[23] = { x: -0.1, y: 0.75, z: -0.1 }
+    lm[24] = { x: 0.1, y: 0.75, z: -0.1 }
+    lm[25] = { x: -0.1, y: 0.7, z: -0.3 }
+    lm[26] = { x: 0.1, y: 0.7, z: -0.3 }
+    lm[27] = { x: -0.1, y: 0.65, z: -0.5 }
+    lm[28] = { x: 0.1, y: 0.65, z: -0.5 }
+    lm[13] = { x: -0.2, y: 0.7, z: 0.35 }
+    lm[15] = { x: -0.2, y: 0.65, z: 0.4 }
+    lm[14] = { x: 0.2, y: 0.7, z: 0.35 }
+    lm[16] = { x: 0.2, y: 0.65, z: 0.4 }
+    return lm
+  })(),
+  jointAngles: {
+    left_knee: 175, right_knee: 175,
+    left_hip: 170, right_hip: 170,
+    left_shoulder: 170, right_shoulder: 170,
+    left_elbow: 175, right_elbow: 175,
+  },
+}
+
+/** 舞王式：单腿站立，后腿弯曲向后 */
+const natarajasana: StandardPoseData = {
+  id: 'natarajasana',
+  nameCN: '舞王式',
+  nameEN: 'Dancer Pose',
+  difficulty: 'advanced',
+  landmarks: (() => {
+    const lm = cloneLandmarks(STANDING_BASE)
+    lm[23] = { x: -0.1, y: 0.7, z: 0 }
+    lm[24] = { x: 0.1, y: 0.7, z: 0 }
+    lm[25] = { x: -0.1, y: 0.45, z: 0 }
+    lm[26] = { x: 0.15, y: 0.7, z: -0.2 }
+    lm[27] = { x: -0.1, y: 0.05, z: 0 }
+    lm[28] = { x: 0.2, y: 0.8, z: -0.3 }
+    lm[11] = { x: -0.2, y: 1.2, z: 0 }
+    lm[12] = { x: 0.2, y: 1.3, z: 0 }
+    lm[13] = { x: -0.2, y: 1.4, z: 0 }
+    lm[15] = { x: -0.2, y: 1.6, z: 0 }
+    lm[14] = { x: 0.2, y: 1.2, z: -0.1 }
+    lm[16] = { x: 0.2, y: 0.8, z: -0.25 }
+    return lm
+  })(),
+  jointAngles: {
+    left_knee: 175, right_knee: 90,
+    left_hip: 175, right_hip: 130,
+    left_shoulder: 170, right_shoulder: 150,
+  },
+}
+
+/** 鳄鱼式：低位俯卧撑 */
+const chaturanga: StandardPoseData = {
+  id: 'chaturanga',
+  nameCN: '鳄鱼式',
+  nameEN: 'Chaturanga',
+  difficulty: 'advanced',
+  landmarks: (() => {
+    const lm = cloneLandmarks(STANDING_BASE)
+    lm[0] = { x: 0, y: 0.5, z: 0.3 }
+    lm[11] = { x: -0.2, y: 0.5, z: 0.3 }
+    lm[12] = { x: 0.2, y: 0.5, z: 0.3 }
+    lm[23] = { x: -0.1, y: 0.45, z: -0.1 }
+    lm[24] = { x: 0.1, y: 0.45, z: -0.1 }
+    lm[25] = { x: -0.1, y: 0.4, z: -0.3 }
+    lm[26] = { x: 0.1, y: 0.4, z: -0.3 }
+    lm[27] = { x: -0.1, y: 0.35, z: -0.5 }
+    lm[28] = { x: 0.1, y: 0.35, z: -0.5 }
+    lm[13] = { x: -0.2, y: 0.4, z: 0.3 }
+    lm[15] = { x: -0.2, y: 0.35, z: 0.3 }
+    lm[14] = { x: 0.2, y: 0.4, z: 0.3 }
+    lm[16] = { x: 0.2, y: 0.35, z: 0.3 }
+    return lm
+  })(),
+  jointAngles: {
+    left_knee: 175, right_knee: 175,
+    left_hip: 175, right_hip: 175,
+    left_shoulder: 100, right_shoulder: 100,
+    left_elbow: 100, right_elbow: 100,
+  },
+}
+
+// ============================================================
+
 /** 所有标准体式 */
 export const STANDARD_POSE_DATABASE: StandardPoseData[] = [
   tadasana,
+  virabhadrasana_i,
   virabhadrasana_ii,
+  virabhadrasana_iii,
   trikonasana,
+  utthita_parsvakonasana,
   adho_mukha_svanasana,
   vrksasana,
   utkatasana,
+  setu_bandhasana,
+  ustrasana,
+  plank,
+  natarajasana,
+  chaturanga,
   balasana,
   bhujangasana,
   navasana,

@@ -1467,6 +1467,8 @@ export const useAppStore = create<AppState>((set) => ({
 - 每个体式存储：关键点坐标、关节角度、骨骼向量、连接关系
 - 支持多角度参考（正面/侧面/45°视角）
 - 存储格式：JSON 文件，便于扩展和修改
+- **目标体式数量**：27+ 个体式（覆盖初/中/高级）
+- **来源**：Hello Yogis 瑜珈動作大全 (https://helloyogis.com/magazine/2022/06/27/all-asana/)
 
 #### 2. 坐标转换映射
 - MediaPipe 坐标系 (x右y下z前) → 解剖学坐标系 (x右y上前)

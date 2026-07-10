@@ -148,6 +148,97 @@ const POSE_RULES: PoseRule[] = [
       { joint: 'right_shoulder', minAngle: 170, maxAngle: 180, weight: 1.0 },
     ],
   },
+  // 新增体式规则
+  {
+    id: 'virabhadrasana_i',
+    nameCN: '战士一式',
+    rules: [
+      { joint: 'left_knee', minAngle: 70, maxAngle: 110, weight: 2.0 },
+      { joint: 'right_knee', minAngle: 165, maxAngle: 180, weight: 1.5 },
+      { joint: 'left_shoulder', minAngle: 165, maxAngle: 180, weight: 1.5 },
+      { joint: 'right_shoulder', minAngle: 165, maxAngle: 180, weight: 1.5 },
+    ],
+  },
+  {
+    id: 'virabhadrasana_iii',
+    nameCN: '战士三式',
+    rules: [
+      { joint: 'left_knee', minAngle: 165, maxAngle: 180, weight: 1.5 },
+      { joint: 'right_knee', minAngle: 165, maxAngle: 180, weight: 1.5 },
+      { joint: 'left_hip', minAngle: 160, maxAngle: 180, weight: 1.5 },
+      { joint: 'right_hip', minAngle: 160, maxAngle: 180, weight: 1.5 },
+      { joint: 'left_shoulder', minAngle: 160, maxAngle: 180, weight: 1.0 },
+      { joint: 'right_shoulder', minAngle: 160, maxAngle: 180, weight: 1.0 },
+    ],
+  },
+  {
+    id: 'setu_bandhasana',
+    nameCN: '桥式',
+    rules: [
+      { joint: 'left_knee', minAngle: 80, maxAngle: 120, weight: 2.0 },
+      { joint: 'right_knee', minAngle: 80, maxAngle: 120, weight: 2.0 },
+      { joint: 'left_hip', minAngle: 100, maxAngle: 140, weight: 1.5 },
+      { joint: 'right_hip', minAngle: 100, maxAngle: 140, weight: 1.5 },
+      { joint: 'left_shoulder', minAngle: 160, maxAngle: 180, weight: 1.0 },
+      { joint: 'right_shoulder', minAngle: 160, maxAngle: 180, weight: 1.0 },
+    ],
+  },
+  {
+    id: 'ustrasana',
+    nameCN: '骆驼式',
+    rules: [
+      { joint: 'left_knee', minAngle: 80, maxAngle: 120, weight: 2.0 },
+      { joint: 'right_knee', minAngle: 80, maxAngle: 120, weight: 2.0 },
+      { joint: 'left_hip', minAngle: 140, maxAngle: 180, weight: 1.5 },
+      { joint: 'right_hip', minAngle: 140, maxAngle: 180, weight: 1.5 },
+      { joint: 'left_shoulder', minAngle: 110, maxAngle: 150, weight: 1.5 },
+      { joint: 'right_shoulder', minAngle: 110, maxAngle: 150, weight: 1.5 },
+    ],
+  },
+  {
+    id: 'utthita_parsvakonasana',
+    nameCN: '侧角伸展式',
+    rules: [
+      { joint: 'left_knee', minAngle: 70, maxAngle: 110, weight: 2.0 },
+      { joint: 'right_knee', minAngle: 165, maxAngle: 180, weight: 1.5 },
+      { joint: 'left_shoulder', minAngle: 100, maxAngle: 140, weight: 1.5 },
+      { joint: 'right_shoulder', minAngle: 20, maxAngle: 60, weight: 1.5 },
+    ],
+  },
+  {
+    id: 'plank',
+    nameCN: '平板式',
+    rules: [
+      { joint: 'left_knee', minAngle: 165, maxAngle: 180, weight: 1.0 },
+      { joint: 'right_knee', minAngle: 165, maxAngle: 180, weight: 1.0 },
+      { joint: 'left_hip', minAngle: 165, maxAngle: 180, weight: 1.5 },
+      { joint: 'right_hip', minAngle: 165, maxAngle: 180, weight: 1.5 },
+      { joint: 'left_elbow', minAngle: 165, maxAngle: 180, weight: 1.5 },
+      { joint: 'right_elbow', minAngle: 165, maxAngle: 180, weight: 1.5 },
+    ],
+  },
+  {
+    id: 'natarajasana',
+    nameCN: '舞王式',
+    rules: [
+      { joint: 'left_knee', minAngle: 165, maxAngle: 180, weight: 1.5 },
+      { joint: 'right_knee', minAngle: 70, maxAngle: 110, weight: 2.0 },
+      { joint: 'left_hip', minAngle: 165, maxAngle: 180, weight: 1.5 },
+      { joint: 'right_hip', minAngle: 110, maxAngle: 150, weight: 1.5 },
+    ],
+  },
+  {
+    id: 'chaturanga',
+    nameCN: '鳄鱼式',
+    rules: [
+      { joint: 'left_knee', minAngle: 165, maxAngle: 180, weight: 1.0 },
+      { joint: 'right_knee', minAngle: 165, maxAngle: 180, weight: 1.0 },
+      { joint: 'left_elbow', minAngle: 80, maxAngle: 120, weight: 2.0 },
+      { joint: 'right_elbow', minAngle: 80, maxAngle: 120, weight: 2.0 },
+      { joint: 'left_shoulder', minAngle: 80, maxAngle: 120, weight: 1.5 },
+      { joint: 'right_shoulder', minAngle: 80, maxAngle: 120, weight: 1.5 },
+    ],
+  },
 ]
 
 export class PoseClassifier {
