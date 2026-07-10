@@ -341,7 +341,10 @@ export function App() {
 
         if (result) {
           setCurrentPose(result)
-          rendererRef.current?.updatePose(result.landmarks)
+          const debug = rendererRef.current?.updatePose(result.landmarks)
+          if (debug) {
+            setDebugData({ ...debug, frameCount: 1 })
+          }
 
           // 在 canvas 上绘制图片和关键点
           drawPoseOverlay(imgEl, result.landmarks)
@@ -423,7 +426,10 @@ export function App() {
           setCurrentPose(result)
           setConfidence(result.confidence ?? 0.5)
           setSmootherState(estimator.getState())
-          rendererRef.current?.updatePose(result.landmarks)
+          const debug = rendererRef.current?.updatePose(result.landmarks)
+          if (debug) {
+            setDebugData({ ...debug, frameCount: debugData.frameCount + 1 })
+          }
 
           const angles = AngleCalculator.calculateAllAngles(result.landmarks)
 
