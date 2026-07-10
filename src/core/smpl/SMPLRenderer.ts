@@ -326,14 +326,6 @@ export class SMPLRenderer {
       .multiplyScalar(0.5)
     this.humanModel.position.copy(hipCenter)
   }
-    }
-
-    // 更新模型位置（跟随髋部）
-    const hipCenter = new THREE.Vector3()
-      .addVectors(jointPositions[23], jointPositions[24])
-      .multiplyScalar(0.5)
-    this.humanModel.position.copy(hipCenter)
-  }
 
   /** 更新肌肉热力图 */
   updateMuscleHeatmap(tensions: MuscleTensionData[]): void {
