@@ -128,25 +128,16 @@ export function App() {
   const startCamera = useCallback(async (deviceId?: string) => {
     try {
       const manager = getInputManager()
-      await manager.switchSource({
-        type: 'camera',
-        cameraId: deviceId,
-        resolution: { width: 1280, height: 720 },
-      })
 
-      // 显示视频元素
+      // 将 UI 的 video 元素传给 InputManager
       if (videoRef.current) {
-        videoRef.current.style.display = 'block'
+        manager.setExternalVideo(videoRef.current)
       }
 
-      // 获取视频元素用于 UI 显示
-      const video = manager.getVideoElement()
-      if (video && videoRef.current) {
-        videoRef.current.srcObject = video.srcObject
-        videoRef.current.src = ''
-        await videoRef.current.play()
+      await manager.startCamera(deviceId, { width: 1280, height: 720 })
 
-        // 更新宽高比
+      // 更新宽高比
+      if (videoRef.current) {
         const w = videoRef.current.videoWidth
         const h = videoRef.current.videoHeight
         if (w > 0 && h > 0) {
@@ -314,42 +305,51 @@ export function App() {
       setStatus(`正在加载视频: ${file.name}`)
 
       const manager = getInputManager()
-      await manager.loadVideoFile(file)
 
-      // 获取视频元素用于 UI 显示
+      // 将 UI 的 video 元素传给 InputManager
       if (videoRef.current) {
-        videoRef.current.srcObject = null
-        videoRef.current.src = URL.createObjectURL(file)
-        videoRef.current.loop = true
-        videoRef.current.muted = true
-
-        // 等待元数据加载以获取宽高比
-        await new Promise<void>((resolve) => {
-          videoRef.current!.onloadedmetadata = () => {
-            const w = videoRef.current!.videoWidth
-            const h = videoRef.current!.videoHeight
-            if (w > 0 && h > 0) {
-              setVideoAspect(w / h)
-            }
-            resolve()
-          }
-        })
-
-        await videoRef.current.play()
+        manager.setExternalVideo(videoRef.current)
       }
 
-      // 注册帧回调
+      await manager.loadVideoFile(file)
+
+      // 更新宽高比
+      if (videoRef.current) {
+        const w = videoRef.current.videoWidth
+        const h = videoRef.current.videoHeight
+        if (w > 0 && h > 0) {
+          setVideoAspect(w / h)
+        }
+      }
+
+      // 注册帧回调 (带节流)
       manager.onFrame(async (frame) => {
+        const now = performance.now()
+        if (now - lastProcessTime.current < PROCESS_INTERVAL) return
+        lastProcessTime.current = now
+
         const estimator = await getPoseEstimator()
         const result = estimator.estimate(frame.imageData as any, frame.timestamp)
 
         if (result) {
           setCurrentPose(result)
           setConfidence(result.confidence ?? 0.5)
+          setSmootherState(estimator.getState())
           rendererRef.current?.updatePose(result.landmarks)
 
           const angles = AngleCalculator.calculateAllAngles(result.landmarks)
-          const standard = getStandardPose(selectedPose)
+
+          let activePoseId = selectedPose
+          if (autoDetect) {
+            const classifier = getClassifier()
+            const classification = classifier.classify(angles)
+            setDetectedPose(classification)
+            if (classification && classification.confidence > 0.6) {
+              activePoseId = classification.poseId
+            }
+          }
+
+          const standard = getStandardPose(activePoseId)
           if (standard) {
             const comparator = new PoseComparator()
             const compResult = comparator.compare(angles, standard)
@@ -364,6 +364,13 @@ export function App() {
               .filter((d) => d.severity !== 'good')
               .map((d) => d.joint)
             rendererRef.current?.highlightProblemJoints(problemJoints)
+          }
+
+          // 肌肉热力图
+          if (showMuscles) {
+            const mapper = getMuscleMapper()
+            const tensions = mapper.calculateTension(angles)
+            rendererRef.current?.updateMuscleHeatmap(tensions)
           }
 
           drawPoseOverlay(frame.imageData as any, result.landmarks)
@@ -464,10 +471,7 @@ export function App() {
         {/* 左侧：视频视图 */}
         <div style={styles.leftPanel}>
           <div style={styles.videoContainer}>
-            <div style={{
-              ...styles.videoWrapper,
-              aspectRatio: videoAspect,
-            }}>
+            <div style={styles.videoWrapper}>
               <video
                 ref={videoRef}
                 style={styles.video}
@@ -736,16 +740,18 @@ const styles: Record<string, React.CSSProperties> = {
   },
   videoWrapper: {
     position: 'relative',
-    maxWidth: '100%',
-    maxHeight: '100%',
+    width: '100%',
+    height: '100%',
     overflow: 'hidden',
     borderRadius: 4,
+    backgroundColor: '#111',
   },
   video: {
     width: '100%',
     height: '100%',
     display: 'block',
     objectFit: 'contain',
+    backgroundColor: '#000',
   },
   canvas: {
     position: 'absolute',
@@ -753,6 +759,7 @@ const styles: Record<string, React.CSSProperties> = {
     left: 0,
     width: '100%',
     height: '100%',
+    objectFit: 'contain',
     pointerEvents: 'none',
   },
   videoControls: {

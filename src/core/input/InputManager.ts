@@ -7,6 +7,12 @@ export class InputManager {
   private frameCallbacks: Set<(frame: InputFrame) => void> = new Set()
   private animationId: number | null = null
   private isRunning = false
+  private externalVideo: HTMLVideoElement | null = null
+
+  /** 设置外部视频元素 (UI 显示用) */
+  setExternalVideo(el: HTMLVideoElement): void {
+    this.externalVideo = el
+  }
 
   /** 获取摄像头列表 */
   static async getCameraDevices(): Promise<MediaDeviceInfo[]> {
@@ -14,28 +20,10 @@ export class InputManager {
     return devices.filter((d) => d.kind === 'videoinput')
   }
 
-  /** 切换输入源 */
-  async switchSource(config: InputSourceConfig): Promise<void> {
+  /** 启动摄像头 */
+  async startCamera(deviceId?: string, resolution?: { width: number; height: number }): Promise<void> {
     await this.stop()
 
-    switch (config.type) {
-      case 'camera':
-        await this.startCamera(config.cameraId, config.resolution)
-        break
-      case 'video':
-        await this.loadVideo(config.filePath!)
-        break
-      case 'image':
-        await this.loadImage(config.filePath!)
-        break
-    }
-  }
-
-  /** 启动摄像头 */
-  private async startCamera(
-    deviceId?: string,
-    resolution?: { width: number; height: number }
-  ): Promise<void> {
     const constraints: MediaStreamConstraints = {
       video: {
         deviceId: deviceId ? { exact: deviceId } : undefined,
@@ -46,12 +34,15 @@ export class InputManager {
 
     this.stream = await navigator.mediaDevices.getUserMedia(constraints)
 
-    this.videoElement = document.createElement('video')
-    this.videoElement.srcObject = this.stream
-    this.videoElement.autoplay = true
-    this.videoElement.playsInline = true
-    await this.videoElement.play()
+    // 使用外部视频元素（如果已设置）
+    const video = this.externalVideo ?? document.createElement('video')
+    video.srcObject = this.stream
+    video.autoplay = true
+    video.playsInline = true
+    video.muted = true
+    await video.play()
 
+    this.videoElement = video
     this.startFrameLoop()
   }
 
@@ -59,13 +50,20 @@ export class InputManager {
   async loadVideoFile(file: File): Promise<void> {
     await this.stop()
 
-    this.videoElement = document.createElement('video')
-    this.videoElement.src = URL.createObjectURL(file)
-    this.videoElement.loop = true
-    this.videoElement.muted = true
-    this.videoElement.playsInline = true
-    await this.videoElement.play()
+    const video = this.externalVideo ?? document.createElement('video')
+    video.srcObject = null
+    video.src = URL.createObjectURL(file)
+    video.loop = true
+    video.muted = true
+    video.playsInline = true
 
+    // 等待元数据加载
+    await new Promise<void>((resolve) => {
+      video.onloadedmetadata = () => resolve()
+    })
+    await video.play()
+
+    this.videoElement = video
     this.startFrameLoop()
   }
 
@@ -80,38 +78,11 @@ export class InputManager {
       this.imageElement!.src = URL.createObjectURL(file)
     })
 
-    // 对于图片，只发送一帧
-    const frame: InputFrame = {
-      imageData: this.imageElement,
-      width: this.imageElement.naturalWidth,
-      height: this.imageElement.naturalHeight,
-      timestamp: performance.now(),
+    // 对于图片，隐藏视频元素，只发送一帧
+    if (this.externalVideo) {
+      this.externalVideo.style.display = 'none'
     }
-    this.emitFrame(frame)
-  }
 
-  /** 加载视频文件 (路径) */
-  private async loadVideo(filePath: string): Promise<void> {
-    this.videoElement = document.createElement('video')
-    this.videoElement.src = filePath
-    this.videoElement.loop = true
-    this.videoElement.muted = true
-    this.videoElement.playsInline = true
-    await this.videoElement.play()
-
-    this.startFrameLoop()
-  }
-
-  /** 加载图片 (路径) */
-  private async loadImage(filePath: string): Promise<void> {
-    this.imageElement = new Image()
-    await new Promise<void>((resolve, reject) => {
-      this.imageElement!.onload = () => resolve()
-      this.imageElement!.onerror = () => reject(new Error('图片加载失败'))
-      this.imageElement!.src = filePath
-    })
-
-    // 对于图片，只发送一帧
     const frame: InputFrame = {
       imageData: this.imageElement,
       width: this.imageElement.naturalWidth,
@@ -124,6 +95,12 @@ export class InputManager {
   /** 开始帧循环 */
   private startFrameLoop(): void {
     this.isRunning = true
+
+    // 确保视频元素可见
+    if (this.externalVideo) {
+      this.externalVideo.style.display = 'block'
+    }
+
     const loop = () => {
       if (!this.isRunning || !this.videoElement) return
 
@@ -179,16 +156,16 @@ export class InputManager {
       this.stream = null
     }
 
-    if (this.videoElement) {
+    // 不清除外部视频元素，只清除内部的
+    if (this.videoElement && this.videoElement !== this.externalVideo) {
       this.videoElement.pause()
       this.videoElement.srcObject = null
-      this.videoElement = null
     }
-
+    this.videoElement = null
     this.imageElement = null
   }
 
-  /** 获取视频元素 (用于 UI 展示) */
+  /** 获取视频元素 */
   getVideoElement(): HTMLVideoElement | null {
     return this.videoElement
   }
