@@ -1,12 +1,21 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron'
-import { join } from 'path'
+import { join, dirname } from 'path'
 import * as fs from 'fs'
+import * as os from 'os'
 
 let mainWindow: BrowserWindow | null = null
 const isDev = !app.isPackaged
 
-// 日志文件路径 - 写到项目目录
-const LOG_FILE = join(process.cwd(), 'yoga-debug.log')
+// 日志文件路径 - 尝试多个位置
+let LOG_FILE: string
+try {
+  // 优先写到项目目录
+  LOG_FILE = join(process.cwd(), 'yoga-debug.log')
+  fs.writeFileSync(LOG_FILE, '')
+} catch {
+  // 回退到用户主目录
+  LOG_FILE = join(os.homedir(), 'yoga-debug.log')
+}
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -34,9 +43,18 @@ function createWindow(): void {
   }
 
   // 写入启动日志
-  fs.writeFileSync(LOG_FILE, `[${new Date().toISOString()}] App started\n`)
-  fs.appendFileSync(LOG_FILE, `[${new Date().toISOString()}] Log file: ${LOG_FILE}\n`)
-  fs.appendFileSync(LOG_FILE, `[${new Date().toISOString()}] isDev: ${isDev}\n`)
+  const startLog = `[${new Date().toISOString()}] App started\n` +
+    `[${new Date().toISOString()}] Log file: ${LOG_FILE}\n` +
+    `[${new Date().toISOString()}] isDev: ${isDev}\n` +
+    `[${new Date().toISOString()}] process.cwd(): ${process.cwd()}\n` +
+    `[${new Date().toISOString()}] __dirname: ${__dirname}\n`
+  
+  try {
+    fs.writeFileSync(LOG_FILE, startLog)
+    console.log('Log file created:', LOG_FILE)
+  } catch (error) {
+    console.error('Failed to create log file:', error)
+  }
 }
 
 app.whenReady().then(() => {
