@@ -277,54 +277,28 @@ export class SMPLRenderer {
   private updateGLTFSkeleton(jointPositions: THREE.Vector3[]): void {
     if (!this.skeleton || !this.humanModel) return
 
-    // MediaPipe关节到骨骼的映射 (支持Mixamo和测试模型命名)
-    const jointToBone: [number, string[], string][] = [
-      [23, ['mixamorigLeftUpLeg', 'leftUpperLeg', 'leftHip'], '左髋'],
-      [24, ['mixamorigRightUpLeg', 'rightUpperLeg', 'rightHip'], '右髋'],
-      [25, ['mixamorigLeftLeg', 'leftLeg', 'leftKnee'], '左膝'],
-      [26, ['mixamorigRightLeg', 'rightLeg', 'rightKnee'], '右膝'],
-      [27, ['mixamorigLeftFoot', 'leftFoot', 'leftAnkle'], '左踝'],
-      [28, ['mixamorigRightFoot', 'rightFoot', 'rightAnkle'], '右踝'],
-      [11, ['mixamorigLeftShoulder', 'leftShoulder'], '左肩'],
-      [12, ['mixamorigRightShoulder', 'rightShoulder'], '右肩'],
-      [13, ['mixamorigLeftArm', 'leftUpperArm', 'leftElbow'], '左肘'],
-      [14, ['mixamorigRightArm', 'rightUpperArm', 'rightElbow'], '右肘'],
-      [15, ['mixamorigLeftForeArm', 'leftForeArm', 'leftWrist'], '左腕'],
-      [16, ['mixamorigRightForeArm', 'rightForeArm', 'rightWrist'], '右腕'],
-    ]
-
-    // 更新骨骼旋转
-    for (const [mpIdx, boneNames, _label] of jointToBone) {
-      // 尝试所有可能的骨骼名称
-      let bone: THREE.Bone | null = null
-      for (const name of boneNames) {
-        bone = this.skeleton.bones.find(b => b.name === name) || null
-        if (bone) break
-      }
-      if (!bone) continue
-
-      const joint = jointPositions[mpIdx]
-      if (!joint) continue
-
-      // 计算朝向关节的旋转
-      const parent = bone.parent
-      if (parent && parent instanceof THREE.Bone) {
-        const dir = new THREE.Vector3()
-          .subVectors(joint, parent.position)
-          .normalize()
-        
-        const up = new THREE.Vector3(0, 1, 0)
-        const quat = new THREE.Quaternion()
-        quat.setFromUnitVectors(up, dir)
-        bone.quaternion.copy(quat)
-      }
-    }
-
-    // 更新模型位置（跟随髋部）
+    // 计算髋部中心位置
     const hipCenter = new THREE.Vector3()
       .addVectors(jointPositions[23], jointPositions[24])
       .multiplyScalar(0.5)
+
+    // 移动整个模型到髋部位置
     this.humanModel.position.copy(hipCenter)
+
+    // 计算躯干方向，用于整体旋转
+    const shoulderCenter = new THREE.Vector3()
+      .addVectors(jointPositions[11], jointPositions[12])
+      .multiplyScalar(0.5)
+    
+    const torsoDir = new THREE.Vector3()
+      .subVectors(shoulderCenter, hipCenter)
+      .normalize()
+
+    // 计算整体旋转（使躯干朝向正确方向）
+    const defaultUp = new THREE.Vector3(0, 1, 0)
+    const quat = new THREE.Quaternion()
+    quat.setFromUnitVectors(defaultUp, torsoDir)
+    this.humanModel.quaternion.copy(quat)
   }
 
   /** 更新肌肉热力图 */
