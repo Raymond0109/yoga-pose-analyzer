@@ -72,6 +72,14 @@ export function App() {
   // 性能优化：帧处理节流
   const lastProcessTime = useRef<number>(0)
   const PROCESS_INTERVAL = 33 // ~30fps
+  // 用 ref 同步最新状态给帧回调（避免闭包捕获旧值）
+  const autoDetectRef = useRef(autoDetect)
+  const showMusclesRef = useRef(showMuscles)
+  const selectedPoseRef = useRef(selectedPose)
+
+  useEffect(() => { autoDetectRef.current = autoDetect }, [autoDetect])
+  useEffect(() => { showMusclesRef.current = showMuscles }, [showMuscles])
+  useEffect(() => { selectedPoseRef.current = selectedPose }, [selectedPose])
 
   // 初始化
   useEffect(() => {
@@ -173,8 +181,8 @@ export function App() {
           const angles = AngleCalculator.calculateAllAngles(result.landmarks)
 
           // 自动识别体式
-          let activePoseId = selectedPose
-          if (autoDetect) {
+          let activePoseId = selectedPoseRef.current
+          if (autoDetectRef.current) {
             const classifier = getClassifier()
             const classification = classifier.classify(angles)
             setDetectedPose(classification)
@@ -202,7 +210,7 @@ export function App() {
           }
 
           // 肌肉热力图
-          if (showMuscles) {
+          if (showMusclesRef.current) {
             const mapper = getMuscleMapper()
             const tensions = mapper.calculateTension(angles)
             rendererRef.current?.updateMuscleHeatmap(tensions)
@@ -374,7 +382,7 @@ export function App() {
           }
 
           // 肌肉热力图
-          if (showMuscles) {
+          if (showMusclesRef.current) {
             const mapper = getMuscleMapper()
             const tensions = mapper.calculateTension(angles)
             rendererRef.current?.updateMuscleHeatmap(tensions)
