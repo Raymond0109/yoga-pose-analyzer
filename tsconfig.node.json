@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out/main",
+    "lib": ["ESNext"],
+    "types": ["node"],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "electron/**/*.ts",
+    "src/types/**/*.ts",
+    "src/utils/**/*.ts"
+  ]
+}

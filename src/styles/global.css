@@ -1,0 +1,62 @@
+/* 全局样式 */
+:root {
+  --color-primary: #4A90D9;
+  --color-success: #52C41A;
+  --color-warning: #FAAD14;
+  --color-danger: #FF4D4F;
+  --color-bg: #141414;
+  --color-bg-secondary: #1F1F1F;
+  --color-text: #FFFFFF;
+  --color-text-secondary: #999999;
+  --border-radius: 8px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  overflow: hidden;
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+}
+
+/* 滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #444;
+}
+
+/* 按钮基础样式 */
+button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  font-family: inherit;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out/renderer",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "types": [],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ]
+}
