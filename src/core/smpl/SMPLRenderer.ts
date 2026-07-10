@@ -299,6 +299,20 @@ export class SMPLRenderer {
       hipCenter.z - scaledCenter.z
     )
 
+    // 每100帧输出一次日志
+    if (Math.random() < 0.01) {
+      console.log('SMPL mesh update:', {
+        hipCenter: { x: hipCenter.x.toFixed(2), y: hipCenter.y.toFixed(2), z: hipCenter.z.toFixed(2) },
+        scaleFactor: scaleFactor.toFixed(2),
+        meshPosition: { 
+          x: this.humanMesh.position.x.toFixed(2), 
+          y: this.humanMesh.position.y.toFixed(2), 
+          z: this.humanMesh.position.z.toFixed(2) 
+        },
+        meshSize: { x: this.meshSize.x.toFixed(2), y: this.meshSize.y.toFixed(2) }
+      })
+    }
+
     // 计算躯干方向用于旋转
     const up = new THREE.Vector3().subVectors(shoulderCenter, hipCenter).normalize()
     const defaultUp = new THREE.Vector3(0, 1, 0)
