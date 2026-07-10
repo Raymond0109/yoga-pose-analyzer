@@ -250,13 +250,17 @@ export class SMPLRenderer {
 
     // 更新SMPL网格（如果已加载）
     if (this.humanMesh && this.showMesh) {
+      console.log('Updating SMPL mesh...')
       this.updateHumanMesh(landmarks)
     }
   }
 
   /** 更新人体网格姿态 */
   private updateHumanMesh(landmarks: PoseLandmark[]): void {
-    if (!this.humanMesh || !this.smplModelData) return
+    if (!this.humanMesh || !this.smplModelData) {
+      console.log('updateHumanMesh: no mesh or model data')
+      return
+    }
 
     const scaleX = 1.4
     const scaleY = 2.8
