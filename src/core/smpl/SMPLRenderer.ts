@@ -64,8 +64,8 @@ export class SMPLRenderer {
     this.scene.background = new THREE.Color(0x1a1a2e)
 
     this.camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100)
-    this.camera.position.set(0, 1.2, 3.0)
-    this.camera.lookAt(0, 1.0, 0)
+    this.camera.position.set(0, 1.5, 3.5)
+    this.camera.lookAt(0, 1.2, 0)
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true })
     this.renderer.setSize(width, height)
@@ -73,7 +73,7 @@ export class SMPLRenderer {
     container.appendChild(this.renderer.domElement)
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
-    this.controls.target.set(0, 1.0, 0)
+    this.controls.target.set(0, 1.2, 0)
     this.controls.enableDamping = true
 
     this.scene.add(new THREE.AmbientLight(0xffffff, 0.6))
@@ -117,8 +117,8 @@ export class SMPLRenderer {
     if (!landmarks || landmarks.length < 33) return
 
     // 人体比例缩放 (Y轴放大以匹配真实比例)
-    const scaleX = 1.8
-    const scaleY = 2.2
+    const scaleX = 1.4   // 宽度收窄
+    const scaleY = 2.8   // 身高拉长
     const scaleZ = 1.0
 
     for (let i = 0; i < 33; i++) {
