@@ -276,38 +276,33 @@ export class SMPLRenderer {
     const scaleX = 1.4
     const scaleY = 2.8
 
-    // 计算骨架的髋部中心位置
+    // 骨架坐标
     const hipX = ((landmarks[23].x + landmarks[24].x) / 2 - 0.5) * scaleX
     const hipY = (1 - (landmarks[23].y + landmarks[24].y) / 2) * scaleY
     const hipZ = ((landmarks[23].z + landmarks[24].z) / 2)
 
-    // 计算肩膀中心
+    const shoulderX = ((landmarks[11].x + landmarks[12].x) / 2 - 0.5) * scaleX
     const shoulderY = (1 - (landmarks[11].y + landmarks[12].y) / 2) * scaleY
+    const shoulderZ = ((landmarks[11].z + landmarks[12].z) / 2)
 
-    // 躯干长度
+    // 身体中心 = 髋部和肩膀的中点
+    const centerX = (hipX + shoulderX) / 2
+    const centerY = (hipY + shoulderY) / 2
+    const centerZ = (hipZ + shoulderZ) / 2
+
+    // 身体高度 = 肩膀到髋部的距离的1.5倍 (包含头和腿)
     const torsoLength = Math.abs(shoulderY - hipY)
+    const bodyHeight = torsoLength * 1.8
 
-    // 缩放比例: 模型躯干长度约0.66, 缩放到实际躯干长度
-    const modelTorsoLength = 0.66
-    const scaleFactor = Math.max(0.3, Math.min(5, torsoLength / modelTorsoLength))
+    // 缩放比例 (模型原始高度约1.32)
+    const modelHeight = 1.32
+    const scaleFactor = bodyHeight / modelHeight
 
-    // 计算模型中心偏移 (模型中心y=0.96, 底部y=0.3, 顶部y=1.62)
-    // 髋部在模型中的相对位置: y=0.8 在模型坐标系
-    const meshOffsetY = this.meshCenter.y - 0.8  // 约0.16
-
-    // 设置网格位置
-    this.humanMesh.position.set(
-      hipX,
-      hipY + meshOffsetY * scaleFactor,
-      hipZ
-    )
-
-    // 设置缩放
+    // 设置网格位置到身体中心
+    this.humanMesh.position.set(centerX, centerY, centerZ)
     this.humanMesh.scale.set(scaleFactor, scaleFactor, scaleFactor)
 
     // 计算躯干方向旋转
-    const shoulderX = ((landmarks[11].x + landmarks[12].x) / 2 - 0.5) * scaleX
-    const shoulderZ = ((landmarks[11].z + landmarks[12].z) / 2)
     const torsoDir = { x: shoulderX - hipX, y: shoulderY - hipY, z: shoulderZ - hipZ }
     const torsoLen = Math.sqrt(torsoDir.x ** 2 + torsoDir.y ** 2 + torsoDir.z ** 2)
     
