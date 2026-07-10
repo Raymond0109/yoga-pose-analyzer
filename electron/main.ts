@@ -5,8 +5,8 @@ import * as fs from 'fs'
 let mainWindow: BrowserWindow | null = null
 const isDev = !app.isPackaged
 
-// 日志文件路径
-const LOG_FILE = join(app.getPath('userData'), 'yoga-debug.log')
+// 日志文件路径 - 写到项目目录
+const LOG_FILE = join(process.cwd(), 'yoga-debug.log')
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -32,6 +32,11 @@ function createWindow(): void {
   if (isDev) {
     mainWindow.webContents.openDevTools()
   }
+
+  // 写入启动日志
+  fs.writeFileSync(LOG_FILE, `[${new Date().toISOString()}] App started\n`)
+  fs.appendFileSync(LOG_FILE, `[${new Date().toISOString()}] Log file: ${LOG_FILE}\n`)
+  fs.appendFileSync(LOG_FILE, `[${new Date().toISOString()}] isDev: ${isDev}\n`)
 }
 
 app.whenReady().then(() => {
@@ -82,3 +87,4 @@ ipcMain.on('log:clear', () => {
 
 // 导出日志路径供调试
 console.log('Log file:', LOG_FILE)
+fs.appendFileSync(LOG_FILE, `[${new Date().toISOString()}] IPC handlers registered\n`)
