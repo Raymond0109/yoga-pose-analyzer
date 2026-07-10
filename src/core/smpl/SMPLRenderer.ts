@@ -5,6 +5,7 @@ import type { PoseLandmark } from '@/types/pose'
 import type { MuscleTensionData } from '@/types/smpl'
 import { MuscleMapper } from './MuscleMapper'
 import { ProceduralBody } from './ProceduralBody'
+import { createTestHumanModel } from './TestHumanModel'
 
 // MediaPipe 33 关键点骨骼连接
 const SKELETON_CONNECTIONS: [number, number][] = [
@@ -159,6 +160,31 @@ export class SMPLRenderer {
       }
     } catch (error) {
       console.error('Failed to load human model:', error)
+      this.useGLTF = false
+    }
+  }
+
+  /** 加载测试人体模型 (带骨骼) */
+  loadTestModel(): void {
+    try {
+      const model = createTestHumanModel()
+      this.humanModel = model
+      this.scene.add(this.humanModel)
+
+      // 查找骨骼
+      model.traverse((child) => {
+        if (child instanceof THREE.SkinnedMesh) {
+          this.skeleton = child.skeleton
+        }
+      })
+
+      if (this.skeleton) {
+        this.useGLTF = true
+        this.proceduralBody?.setVisible(false)
+        console.log('Test model loaded with skeleton:', this.skeleton.bones.length, 'bones')
+      }
+    } catch (error) {
+      console.error('Failed to create test model:', error)
       this.useGLTF = false
     }
   }
