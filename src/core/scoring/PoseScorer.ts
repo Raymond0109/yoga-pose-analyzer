@@ -100,6 +100,13 @@ export class PoseScorer {
     currentAngles: JointAngle[],
     targetAngles: JointAngle[]
   ): ScoreResult {
+    console.log('[PoseScorer] calculateScore called:', {
+      currentAnglesCount: currentAngles.length,
+      targetAnglesCount: targetAngles.length,
+      currentJoints: currentAngles.map(a => a.joint),
+      targetJoints: targetAngles.map(a => a.joint),
+    })
+
     const jointScores: JointScore[] = []
     let totalScore = 0
     let maxScore = 0
@@ -110,7 +117,10 @@ export class PoseScorer {
     // 计算每个关节的评分
     for (const current of currentAngles) {
       const target = targetMap.get(current.joint)
-      if (target === undefined) continue
+      if (target === undefined) {
+        console.log('[PoseScorer] No target for joint:', current.joint)
+        continue
+      }
 
       const weight = this.config.weights[current.joint] || 1.0
       const delta = Math.abs(current.angle - target)
@@ -157,6 +167,14 @@ export class PoseScorer {
 
     const percentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0
     const level = this.getLevel(percentage)
+
+    console.log('[PoseScorer] Result:', {
+      jointScoresCount: jointScores.length,
+      totalScore: Math.round(totalScore),
+      maxScore: Math.round(maxScore),
+      percentage: Math.round(percentage),
+      level,
+    })
 
     const result: ScoreResult = {
       totalScore: Math.round(totalScore),
