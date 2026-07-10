@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import type { PoseLandmark } from '@/types/pose'
 import type { MuscleTensionData } from '@/types/smpl'
 import { MuscleMapper } from './MuscleMapper'
@@ -27,6 +28,30 @@ const BONE_TO_MUSCLE: Record<number, string> = {
   16: 'calves_r', 17: 'calves_r',
 }
 
+// Mixamo骨骼名称映射
+const MIXAMO_BONE_MAP: Record<string, number> = {
+  'mixamorigHips': 0,
+  'mixamorigSpine': 3,
+  'mixamorigSpine1': 6,
+  'mixamorigSpine2': 9,
+  'mixamorigNeck': 12,
+  'mixamorigHead': 15,
+  'mixamorigLeftShoulder': 13,
+  'mixamorigLeftArm': 16,
+  'mixamorigLeftForeArm': 18,
+  'mixamorigLeftHand': 20,
+  'mixamorigRightShoulder': 14,
+  'mixamorigRightArm': 17,
+  'mixamorigRightForeArm': 19,
+  'mixamorigRightHand': 21,
+  'mixamorigLeftUpLeg': 1,
+  'mixamorigLeftLeg': 4,
+  'mixamorigLeftFoot': 7,
+  'mixamorigRightUpLeg': 2,
+  'mixamorigRightLeg': 5,
+  'mixamorigRightFoot': 8,
+}
+
 const BONE_COLOR = 0x4a90d9
 const JOINT_COLOR = 0x52c41a
 const PROBLEM_COLOR = 0xff4d4f
@@ -42,8 +67,11 @@ export class SMPLRenderer {
   private showMuscles = false
   private showBody = true
 
-  // 程序化身体
+  // 人体模型
   private proceduralBody: ProceduralBody | null = null
+  private humanModel: THREE.Group | null = null
+  private skeleton: THREE.Skeleton | null = null
+  private useGLTF = false
 
   constructor(container: HTMLElement) {
     this.container = container
@@ -102,6 +130,36 @@ export class SMPLRenderer {
       mesh.visible = false
       this.scene.add(mesh)
       this.bones.push(mesh)
+    }
+  }
+
+  /** 加载glTF人体模型 (Mixamo/MakeHuman) */
+  async loadHumanModel(modelPath: string): Promise<void> {
+    try {
+      const loader = new GLTFLoader()
+      const gltf = await loader.loadAsync(modelPath)
+
+      this.humanModel = gltf.scene
+      this.scene.add(this.humanModel)
+
+      // 查找骨骼
+      this.humanModel.traverse((child) => {
+        if (child instanceof THREE.SkinnedMesh) {
+          this.skeleton = child.skeleton
+        }
+      })
+
+      if (this.skeleton) {
+        this.useGLTF = true
+        // 隐藏程序化身体
+        this.proceduralBody?.setVisible(false)
+        console.log('Human model loaded with skeleton:', this.skeleton.bones.length, 'bones')
+      } else {
+        console.warn('Model loaded but no skeleton found, using procedural body')
+      }
+    } catch (error) {
+      console.error('Failed to load human model:', error)
+      this.useGLTF = false
     }
   }
 
@@ -165,9 +223,11 @@ export class SMPLRenderer {
       this.bones[i].lookAt(endVec)
     }
 
-    // 更新程序化身体
-    if (this.proceduralBody && this.showBody) {
-      this.proceduralBody.update(jointPositions)
+    // 更新人体模型
+    if (this.useGLTF && this.skeleton) {
+      this.updateGLTFSkeleton(jointPositions)
+    } else if (this.showBody) {
+      this.proceduralBody?.update(jointPositions)
     }
 
     // 计算调试数据
@@ -182,9 +242,58 @@ export class SMPLRenderer {
       hipCenter: { x: hipX, y: hipY, z: hipZ },
       shoulderCenter: { x: shoulderX, y: shoulderY, z: hipZ },
       meshPosition: { x: hipX, y: (hipY + shoulderY) / 2, z: hipZ },
-      meshScale: 1,
+      meshScale: this.humanModel ? this.humanModel.scale.x : 1,
       torsoLength,
     }
+  }
+
+  /** 更新glTF骨骼姿态 */
+  private updateGLTFSkeleton(jointPositions: THREE.Vector3[]): void {
+    if (!this.skeleton || !this.humanModel) return
+
+    // MediaPipe关节到骨骼的映射
+    const jointToBone: [number, string][] = [
+      [23, 'mixamorigLeftUpLeg'],
+      [24, 'mixamorigRightUpLeg'],
+      [25, 'mixamorigLeftLeg'],
+      [26, 'mixamorigRightLeg'],
+      [27, 'mixamorigLeftFoot'],
+      [28, 'mixamorigRightFoot'],
+      [11, 'mixamorigLeftShoulder'],
+      [12, 'mixamorigRightShoulder'],
+      [13, 'mixamorigLeftArm'],
+      [14, 'mixamorigRightArm'],
+      [15, 'mixamorigLeftForeArm'],
+      [16, 'mixamorigRightForeArm'],
+    ]
+
+    // 更新骨骼旋转
+    for (const [mpIdx, boneName] of jointToBone) {
+      const bone = this.skeleton.bones.find(b => b.name === boneName)
+      if (!bone) continue
+
+      const joint = jointPositions[mpIdx]
+      if (!joint) continue
+
+      // 计算朝向关节的旋转
+      const parent = bone.parent
+      if (parent) {
+        const dir = new THREE.Vector3()
+          .subVectors(joint, parent.position)
+          .normalize()
+        
+        const up = new THREE.Vector3(0, 1, 0)
+        const quat = new THREE.Quaternion()
+        quat.setFromUnitVectors(up, dir)
+        bone.quaternion.copy(quat)
+      }
+    }
+
+    // 更新模型位置（跟随髋部）
+    const hipCenter = new THREE.Vector3()
+      .addVectors(jointPositions[23], jointPositions[24])
+      .multiplyScalar(0.5)
+    this.humanModel.position.copy(hipCenter)
   }
 
   /** 更新肌肉热力图 */
@@ -204,7 +313,6 @@ export class SMPLRenderer {
       mat.emissive.setRGB(color.r * 0.15, color.g * 0.15, color.b * 0.15)
     }
 
-    // 更新身体颜色
     if (this.proceduralBody) {
       const avgTension = tensions.length > 0
         ? tensions.reduce((s, t) => s + t.tension, 0) / tensions.length
@@ -230,6 +338,9 @@ export class SMPLRenderer {
     this.showBody = show
     if (this.proceduralBody) {
       this.proceduralBody.setVisible(show)
+    }
+    if (this.humanModel) {
+      this.humanModel.visible = show
     }
   }
 
