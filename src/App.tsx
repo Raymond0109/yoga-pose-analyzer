@@ -69,6 +69,9 @@ export function App() {
   // 平滑强度 0-4: 0=无, 1=轻, 2=中, 3=强, 4=极强
   const [smoothLevel, setSmoothLevel] = useState<number>(2)
   const [showMuscles, setShowMuscles] = useState<boolean>(false)
+  // 性能优化：帧处理节流
+  const lastProcessTime = useRef<number>(0)
+  const PROCESS_INTERVAL = 33 // ~30fps
 
   // 初始化
   useEffect(() => {
@@ -151,8 +154,12 @@ export function App() {
         }
       }
 
-      // 注册帧回调
+      // 注册帧回调 (带节流)
       manager.onFrame(async (frame) => {
+        const now = performance.now()
+        if (now - lastProcessTime.current < PROCESS_INTERVAL) return
+        lastProcessTime.current = now
+
         const estimator = await getPoseEstimator()
         const result = estimator.estimate(frame.imageData as any, frame.timestamp)
 
@@ -852,21 +859,22 @@ const styles: Record<string, React.CSSProperties> = {
   poseSelector: {
     display: 'flex',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: 5,
   },
   poseButton: {
     padding: '4px 10px',
-    backgroundColor: '#333',
-    color: '#ccc',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    color: '#aaa',
     borderRadius: 4,
     fontSize: 12,
-    border: '1px solid #444',
+    border: '1px solid rgba(255,255,255,0.08)',
     cursor: 'pointer',
   },
   poseButtonActive: {
     backgroundColor: '#4a90d9',
     color: '#fff',
     borderColor: '#4a90d9',
+    boxShadow: '0 0 8px rgba(74,144,217,0.3)',
   },
   smoothSelector: {
     display: 'flex',
@@ -874,17 +882,18 @@ const styles: Record<string, React.CSSProperties> = {
   },
   smoothButton: {
     padding: '3px 8px',
-    backgroundColor: '#333',
-    color: '#ccc',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    color: '#aaa',
     borderRadius: 4,
     fontSize: 11,
-    border: '1px solid #444',
+    border: '1px solid rgba(255,255,255,0.08)',
     cursor: 'pointer',
   },
   smoothButtonActive: {
     backgroundColor: '#722ed1',
     color: '#fff',
     borderColor: '#722ed1',
+    boxShadow: '0 0 8px rgba(114,46,209,0.3)',
   },
   correctionSection: {
     flex: 1,
@@ -894,29 +903,30 @@ const styles: Record<string, React.CSSProperties> = {
   corrections: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 6,
+    gap: 5,
   },
   noCorrection: {
-    color: '#666',
-    fontSize: 13,
+    color: '#555',
+    fontSize: 12,
   },
   correctionCard: {
     padding: '6px 10px',
-    backgroundColor: '#1f1f1f',
+    backgroundColor: 'rgba(255,255,255,0.03)',
     borderRadius: 4,
     borderLeft: '3px solid #faad14',
   },
   correctionTitle: {
-    fontSize: 13,
+    fontSize: 12,
     display: 'block',
+    fontWeight: 500,
   },
   correctionDesc: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: 11,
+    color: '#777',
     margin: '2px 0',
   },
   correctionAction: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#4a90d9',
     margin: '2px 0 0',
   },

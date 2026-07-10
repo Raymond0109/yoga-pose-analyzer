@@ -1,14 +1,19 @@
 /* 全局样式 */
 :root {
   --color-primary: #4A90D9;
+  --color-primary-hover: #3a7bc8;
   --color-success: #52C41A;
   --color-warning: #FAAD14;
   --color-danger: #FF4D4F;
-  --color-bg: #141414;
-  --color-bg-secondary: #1F1F1F;
-  --color-text: #FFFFFF;
-  --color-text-secondary: #999999;
-  --border-radius: 8px;
+  --color-purple: #722ED1;
+  --color-bg: #0f0f13;
+  --color-bg-secondary: #1a1a24;
+  --color-bg-elevated: #22222e;
+  --color-text: #E8E8E8;
+  --color-text-secondary: #888899;
+  --color-border: #2a2a3a;
+  --border-radius: 6px;
+  --transition: all 0.15s ease;
 }
 
 * {
@@ -22,6 +27,8 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text);
   overflow: hidden;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 #root {
@@ -31,12 +38,12 @@ body {
 
 /* 滚动条 */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-bg-secondary);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -54,9 +61,31 @@ button {
   border: none;
   outline: none;
   font-family: inherit;
+  transition: var(--transition);
+}
+
+button:hover {
+  opacity: 0.85;
+}
+
+button:active {
+  transform: scale(0.97);
 }
 
 button:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
+  transform: none;
+}
+
+/* 输入框 */
+input[type="checkbox"] {
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+/* 选中文本 */
+::selection {
+  background: var(--color-primary);
+  color: #fff;
 }
