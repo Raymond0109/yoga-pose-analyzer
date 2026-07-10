@@ -607,24 +607,33 @@ export function App() {
           )}
           <div style={styles.poseSelector}>
             {[
+              // 初级
               { id: 'tadasana', name: '山式' },
-              { id: 'virabhadrasana_i', name: '战士一式' },
-              { id: 'virabhadrasana_ii', name: '战士二式' },
-              { id: 'virabhadrasana_iii', name: '战士三式' },
-              { id: 'trikonasana', name: '三角式' },
-              { id: 'utthita_parsvakonasana', name: '侧角伸展' },
-              { id: 'adho_mukha_svanasana', name: '下犬式' },
               { id: 'vrksasana', name: '树式' },
+              { id: 'adho_mukha_svanasana', name: '下犬式' },
               { id: 'utkatasana', name: '幻椅式' },
-              { id: 'setu_bandhasana', name: '桥式' },
-              { id: 'ustrasana', name: '骆驼式' },
-              { id: 'plank', name: '平板式' },
-              { id: 'natarajasana', name: '舞王式' },
-              { id: 'chaturanga', name: '鳄鱼式' },
               { id: 'balasana', name: '婴儿式' },
               { id: 'bhujangasana', name: '眼镜蛇式' },
-              { id: 'navasana', name: '船式' },
+              { id: 'setu_bandhasana', name: '桥式' },
+              { id: 'ustrasana', name: '骆驼式' },
+              { id: 'baddha_konasana', name: '蝴蝶式' },
               { id: 'savasana', name: '挺尸式' },
+              // 中级
+              { id: 'virabhadrasana_i', name: '战士一式' },
+              { id: 'virabhadrasana_ii', name: '战士二式' },
+              { id: 'trikonasana', name: '三角式' },
+              { id: 'utthita_parsvakonasana', name: '侧角伸展' },
+              { id: 'plank', name: '平板式' },
+              { id: 'ardha_matsyendrasana', name: '半鱼王式' },
+              { id: 'kapotasana', name: '鸽式' },
+              { id: 'sarvangasana', name: '肩倒立' },
+              // 高级
+              { id: 'virabhadrasana_iii', name: '战士三式' },
+              { id: 'natarajasana', name: '舞王式' },
+              { id: 'chaturanga', name: '鳄鱼式' },
+              { id: 'navasana', name: '船式' },
+              { id: 'bakasana', name: '乌鸦式' },
+              { id: 'sirsasana', name: '头倒立' },
             ].map((p) => (
               <button
                 key={p.id}
