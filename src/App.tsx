@@ -2,15 +2,29 @@ import React, { useEffect, useRef, useCallback, useState } from 'react'
 import { MediaPipePose } from '@/core/pose/MediaPipePose'
 import { InputManager } from '@/core/input/InputManager'
 import { AngleCalculator } from '@/core/pose/AngleCalculator'
+import { PoseClassifier, type ClassificationResult } from '@/core/pose/PoseClassifier'
 import { PoseComparator } from '@/core/comparison/PoseComparator'
 import { CorrectionEngine } from '@/core/comparison/CorrectionEngine'
-import { getStandardPose } from '@/core/comparison/StandardPoseDB'
+import { getStandardPose, STANDARD_POSES } from '@/core/comparison/StandardPoseDB'
+import { MuscleMapper } from '@/core/smpl/MuscleMapper'
 import { useAppStore } from '@/store/appStore'
 import type { InputSourceType } from '@/types/common'
 
 // 全局单例
 let poseEstimator: MediaPipePose | null = null
 let inputManager: InputManager | null = null
+let poseClassifier: PoseClassifier | null = null
+let muscleMapper: MuscleMapper | null = null
+
+function getMuscleMapper(): MuscleMapper {
+  if (!muscleMapper) muscleMapper = new MuscleMapper()
+  return muscleMapper
+}
+
+function getClassifier(): PoseClassifier {
+  if (!poseClassifier) poseClassifier = new PoseClassifier()
+  return poseClassifier
+}
 
 async function getPoseEstimator(): Promise<MediaPipePose> {
   if (!poseEstimator) {
@@ -47,11 +61,14 @@ export function App() {
   const [score, setScore] = useState<number>(0)
   const [confidence, setConfidence] = useState<number>(0)
   const [smootherState, setSmootherState] = useState<'tracking' | 'locked'>('tracking')
+  const [detectedPose, setDetectedPose] = useState<ClassificationResult | null>(null)
+  const [autoDetect, setAutoDetect] = useState<boolean>(false)
   const [cameraDevices, setCameraDevices] = useState<MediaDeviceInfo[]>([])
   const [currentFileName, setCurrentFileName] = useState<string>('')
   const [videoAspect, setVideoAspect] = useState<number>(16 / 9)
   // 平滑强度 0-4: 0=无, 1=轻, 2=中, 3=强, 4=极强
   const [smoothLevel, setSmoothLevel] = useState<number>(2)
+  const [showMuscles, setShowMuscles] = useState<boolean>(false)
 
   // 初始化
   useEffect(() => {
@@ -89,6 +106,13 @@ export function App() {
       rendererRef.current?.dispose()
     }
   }, [])
+
+  // 肌肉显示切换
+  useEffect(() => {
+    if (rendererRef.current) {
+      rendererRef.current.setShowMuscles(showMuscles)
+    }
+  }, [showMuscles])
 
   // 平滑强度变化时更新滤波器参数
   useEffect(() => {
@@ -142,7 +166,19 @@ export function App() {
 
           // 计算角度和对比
           const angles = AngleCalculator.calculateAllAngles(result.landmarks)
-          const standard = getStandardPose(selectedPose)
+
+          // 自动识别体式
+          let activePoseId = selectedPose
+          if (autoDetect) {
+            const classifier = getClassifier()
+            const classification = classifier.classify(angles)
+            setDetectedPose(classification)
+            if (classification && classification.confidence > 0.6) {
+              activePoseId = classification.poseId
+            }
+          }
+
+          const standard = getStandardPose(activePoseId)
           if (standard) {
             const comparator = new PoseComparator()
             const compResult = comparator.compare(angles, standard)
@@ -158,6 +194,13 @@ export function App() {
               .filter((d) => d.severity !== 'good')
               .map((d) => d.joint)
             rendererRef.current?.highlightProblemJoints(problemJoints)
+          }
+
+          // 肌肉热力图
+          if (showMuscles) {
+            const mapper = getMuscleMapper()
+            const tensions = mapper.calculateTension(angles)
+            rendererRef.current?.updateMuscleHeatmap(tensions)
           }
 
           // 绘制 2D 关键点叠加
@@ -506,7 +549,26 @@ export function App() {
       <div style={styles.bottomPanel}>
         {/* 左侧：控制面板 */}
         <div style={styles.controlSection}>
-          <h3 style={styles.sectionTitle}>体式选择</h3>
+          <div style={styles.controlRow}>
+            <h3 style={styles.sectionTitle}>体式选择</h3>
+            <label style={styles.autoDetectLabel}>
+              <input
+                type="checkbox"
+                checked={autoDetect}
+                onChange={(e) => setAutoDetect(e.target.checked)}
+                style={styles.checkbox}
+              />
+              自动识别
+            </label>
+          </div>
+          {autoDetect && detectedPose && detectedPose.confidence > 0.4 && (
+            <div style={styles.detectedInfo}>
+              识别: {STANDARD_POSES.find(p => p.id === detectedPose.poseId)?.nameCN ?? detectedPose.poseId}
+              <span style={styles.detectedConf}>
+                {Math.round(detectedPose.confidence * 100)}%
+              </span>
+            </div>
+          )}
           <div style={styles.poseSelector}>
             {[
               { id: 'tadasana', name: '山式' },
@@ -552,6 +614,18 @@ export function App() {
                 {s.label}
               </button>
             ))}
+          </div>
+          <h3 style={{...styles.sectionTitle, marginTop: 12}}>显示选项</h3>
+          <div style={styles.toggleRow}>
+            <label style={styles.toggleLabel}>
+              <input
+                type="checkbox"
+                checked={showMuscles}
+                onChange={(e) => setShowMuscles(e.target.checked)}
+                style={styles.checkbox}
+              />
+              肌肉热力图
+            </label>
           </div>
         </div>
 
@@ -726,6 +800,48 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '10px 14px',
     borderRight: '1px solid #333',
     overflow: 'auto',
+  },
+  controlRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  autoDetectLabel: {
+    fontSize: 12,
+    color: '#ccc',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4,
+    cursor: 'pointer',
+  },
+  checkbox: {
+    cursor: 'pointer',
+  },
+  detectedInfo: {
+    fontSize: 12,
+    color: '#52c41a',
+    padding: '4px 8px',
+    backgroundColor: '#1a2e1a',
+    borderRadius: 4,
+    marginBottom: 6,
+    display: 'flex',
+    justifyContent: 'space-between',
+  },
+  detectedConf: {
+    color: '#999',
+  },
+  toggleRow: {
+    display: 'flex',
+    gap: 12,
+  },
+  toggleLabel: {
+    fontSize: 12,
+    color: '#ccc',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4,
+    cursor: 'pointer',
   },
   sectionTitle: {
     fontSize: 14,

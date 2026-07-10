@@ -1,32 +1,29 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import type { PoseLandmark } from '@/types/pose'
+import type { MuscleTensionData } from '@/types/smpl'
+import { MuscleMapper } from './MuscleMapper'
 
 // MediaPipe 33 个关键点的骨骼连接定义
 const SKELETON_CONNECTIONS: [number, number][] = [
-  // 躯干
-  [11, 12], // 左肩-右肩
-  [23, 24], // 左髋-右髋
-  [11, 23], // 左肩-左髋
-  [12, 24], // 右肩-右髋
-  // 左臂
-  [11, 13], // 左肩-左肘
-  [13, 15], // 左肘-左腕
-  // 右臂
-  [12, 14], // 右肩-右肘
-  [14, 16], // 右肘-右腕
-  // 左腿
-  [23, 25], // 左髋-左膝
-  [25, 27], // 左膝-左踝
-  // 右腿
-  [24, 26], // 右髋-右膝
-  [26, 28], // 右膝-右踝
-  // 脊柱
-  [0, 11],  // 鼻-左肩 (近似)
-  [0, 12],  // 鼻-右肩
+  [11, 12], [23, 24], [11, 23], [12, 24],
+  [11, 13], [13, 15], [12, 14], [14, 16],
+  [23, 25], [25, 27], [24, 26], [26, 28],
+  [0, 11], [0, 12],
 ]
 
-// 骨骼颜色
+// 骨骼 → 肌肉映射
+const BONE_TO_MUSCLE: Record<number, string> = {
+  4: 'quadriceps_l',   // 11-13 左肩-左肘 → 肱二头肌/三头肌
+  5: 'biceps_l',
+  6: 'quadriceps_r',
+  7: 'biceps_r',
+  8: 'quadriceps_l',   // 23-25 左髋-左膝
+  9: 'quadriceps_l',
+  10: 'quadriceps_r',
+  11: 'quadriceps_r',
+}
+
 const BONE_COLOR = 0x4a90d9
 const JOINT_COLOR = 0x52c41a
 const PROBLEM_COLOR = 0xff4d4f
@@ -39,15 +36,14 @@ export class SMPLRenderer {
   private joints: THREE.Mesh[] = []
   private bones: THREE.Mesh[] = []
   private container: HTMLElement
+  private showMuscles = false
 
   constructor(container: HTMLElement) {
     this.container = container
 
-    // 场景
     this.scene = new THREE.Scene()
     this.scene.background = new THREE.Color(0x1a1a2e)
 
-    // 相机
     this.camera = new THREE.PerspectiveCamera(
       50,
       container.clientWidth / container.clientHeight,
@@ -56,72 +52,59 @@ export class SMPLRenderer {
     )
     this.camera.position.set(0, 1.2, 3)
 
-    // 渲染器
     this.renderer = new THREE.WebGLRenderer({ antialias: true })
     this.renderer.setSize(container.clientWidth, container.clientHeight)
     this.renderer.setPixelRatio(window.devicePixelRatio)
     container.appendChild(this.renderer.domElement)
 
-    // 控制器
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
     this.controls.target.set(0, 1, 0)
     this.controls.enableDamping = true
 
-    // 光照
     this.scene.add(new THREE.AmbientLight(0xffffff, 0.6))
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.8)
     dirLight.position.set(2, 5, 3)
     this.scene.add(dirLight)
 
-    // 地面网格
     const gridHelper = new THREE.GridHelper(4, 20, 0x333333, 0x222222)
     this.scene.add(gridHelper)
 
-    // 初始化骨骼
     this.initSkeleton()
-
     this.animate()
   }
 
-  /** 初始化骨骼几何体 */
   private initSkeleton(): void {
     const jointGeo = new THREE.SphereGeometry(0.03, 16, 16)
     const jointMat = new THREE.MeshStandardMaterial({ color: JOINT_COLOR })
 
-    // 创建 33 个关节球
     for (let i = 0; i < 33; i++) {
-      const mesh = new THREE.Mesh(jointGeo, jointMat)
+      const mesh = new THREE.Mesh(jointGeo, jointMat.clone())
       mesh.visible = false
       this.scene.add(mesh)
       this.joints.push(mesh)
     }
 
-    // 创建骨骼连接
     const boneMat = new THREE.MeshStandardMaterial({ color: BONE_COLOR })
     for (let i = 0; i < SKELETON_CONNECTIONS.length; i++) {
       const geo = new THREE.CylinderGeometry(0.015, 0.015, 1, 8)
       geo.translate(0, 0.5, 0)
       geo.rotateX(Math.PI / 2)
-      const mesh = new THREE.Mesh(geo, boneMat)
+      const mesh = new THREE.Mesh(geo, boneMat.clone())
       mesh.visible = false
       this.scene.add(mesh)
       this.bones.push(mesh)
     }
   }
 
-  /** 更新姿态 */
   updatePose(landmarks: PoseLandmark[]): void {
     if (!landmarks || landmarks.length < 33) return
 
-    // 更新关节位置
     for (let i = 0; i < 33; i++) {
       const lm = landmarks[i]
-      // MediaPipe 坐标系: x 右, y 下, z 前 → Three.js: x 右, y 上, z 前
       this.joints[i].position.set(lm.x - 0.5, -lm.y + 1, -lm.z)
       this.joints[i].visible = lm.visibility > 0.3
     }
 
-    // 更新骨骼连接
     for (let i = 0; i < SKELETON_CONNECTIONS.length; i++) {
       const [start, end] = SKELETON_CONNECTIONS[i]
       const startJoint = this.joints[start]
@@ -134,20 +117,49 @@ export class SMPLRenderer {
 
       this.bones[i].visible = true
 
-      // 计算骨骼方向和长度
       const startVec = startJoint.position
       const endVec = endJoint.position
       const direction = new THREE.Vector3().subVectors(endVec, startVec)
       const length = direction.length()
 
-      // 设置位置和方向
       this.bones[i].position.copy(startVec)
       this.bones[i].scale.set(1, 1, length)
       this.bones[i].lookAt(endVec)
     }
   }
 
-  /** 设置问题关节高亮 */
+  /** 更新肌肉热力图 */
+  updateMuscleHeatmap(tensions: MuscleTensionData[]): void {
+    if (!this.showMuscles) return
+
+    const tensionMap = new Map(tensions.map((t) => [t.muscle, t.tension]))
+
+    for (let i = 0; i < this.bones.length; i++) {
+      const muscleName = BONE_TO_MUSCLE[i]
+      if (!muscleName) continue
+
+      const tension = tensionMap.get(muscleName) ?? 0
+      const color = MuscleMapper.tensionToColor(tension)
+      const mat = this.bones[i].material as THREE.MeshStandardMaterial
+      mat.color.setRGB(color.r, color.g, color.b)
+      // 增加发光效果
+      mat.emissive.setRGB(color.r * 0.2, color.g * 0.2, color.b * 0.2)
+    }
+  }
+
+  /** 切换肌肉显示模式 */
+  setShowMuscles(show: boolean): void {
+    this.showMuscles = show
+    if (!show) {
+      // 恢复默认骨骼颜色
+      for (const bone of this.bones) {
+        const mat = bone.material as THREE.MeshStandardMaterial
+        mat.color.setHex(BONE_COLOR)
+        mat.emissive.setHex(0x000000)
+      }
+    }
+  }
+
   highlightProblemJoints(problemJoints: string[]): void {
     const jointNameToIndex: Record<string, number> = {
       left_elbow: 13,
@@ -170,28 +182,24 @@ export class SMPLRenderer {
     }
   }
 
-  /** 重置相机 */
   resetCamera(): void {
     this.camera.position.set(0, 1.2, 3)
     this.controls.target.set(0, 1, 0)
     this.controls.update()
   }
 
-  /** 动画循环 */
   private animate = (): void => {
     requestAnimationFrame(this.animate)
     this.controls.update()
     this.renderer.render(this.scene, this.camera)
   }
 
-  /** 调整大小 */
   resize(width: number, height: number): void {
     this.camera.aspect = width / height
     this.camera.updateProjectionMatrix()
     this.renderer.setSize(width, height)
   }
 
-  /** 释放资源 */
   dispose(): void {
     this.renderer.dispose()
     this.controls.dispose()
