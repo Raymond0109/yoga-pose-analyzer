@@ -121,19 +121,27 @@ export function App() {
   useEffect(() => {
     // 延迟初始化确保容器已渲染
     const timer = setTimeout(() => {
-      if (!threeContainerRef.current) return
+      if (!threeContainerRef.current) {
+        console.error('Three container ref is null')
+        return
+      }
+      
+      console.log('Initializing 3D renderer...')
       import('@/core/smpl/SMPLRenderer').then(async ({ SMPLRenderer }) => {
-        if (threeContainerRef.current) {
+        if (!threeContainerRef.current) {
+          console.error('Three container ref became null')
+          return
+        }
+        
+        try {
           rendererRef.current = new SMPLRenderer(threeContainerRef.current)
-          console.log('3D 渲染器已初始化')
+          console.log('3D renderer initialized')
 
           // 加载SMPL测试模型
-          try {
-            await rendererRef.current.loadSMPLModel('/assets/models/smpl/SMPL_TEST.json')
-            console.log('SMPL模型已加载')
-          } catch (error) {
-            console.warn('SMPL模型加载失败，使用骨架模式:', error)
-          }
+          await rendererRef.current.loadSMPLModel('/assets/models/smpl/SMPL_TEST.json')
+          console.log('SMPL model loaded successfully')
+        } catch (error) {
+          console.error('Failed to initialize 3D renderer:', error)
         }
       })
     }, 100)
@@ -194,7 +202,9 @@ export function App() {
           setSmootherState(estimator.getState())
 
           // 更新 3D 渲染
-          rendererRef.current?.updatePose(result.landmarks)
+          if (rendererRef.current) {
+            rendererRef.current.updatePose(result.landmarks)
+          }
 
           // 计算角度和对比
           const angles = AngleCalculator.calculateAllAngles(result.landmarks)

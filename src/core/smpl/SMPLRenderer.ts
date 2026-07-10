@@ -188,7 +188,15 @@ export class SMPLRenderer {
     this.humanMesh = new THREE.Mesh(geometry, material)
     this.scene.add(this.humanMesh)
 
-    console.log('Human mesh added to scene')
+    // 测试：添加一个参考立方体
+    const testGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1)
+    const testMat = new THREE.MeshStandardMaterial({ color: 0xff0000 })
+    const testCube = new THREE.Mesh(testGeo, testMat)
+    testCube.position.set(0, 1, 0)
+    this.scene.add(testCube)
+
+    console.log('Human mesh added to scene, position:', this.humanMesh.position)
+    console.log('Test cube added at (0, 1, 0)')
   }
 
   /** 更新姿态 */
