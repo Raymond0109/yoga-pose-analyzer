@@ -320,11 +320,10 @@ function createGeometryWithSkinning(
 
   // 添加蒙皮属性
   const vertexCount = merged.attributes.position.count
-  const skinIndices = new Float32Array(vertexCount * 4)
+  const skinIndices = new Uint16Array(vertexCount * 4)
   const skinWeights = new Float32Array(vertexCount * 4)
 
   // 简单分配：每个顶点绑定到最近的骨骼
-  // 这里简化处理，实际需要更精确的权重计算
   let vertexOffset = 0
   for (const part of parts) {
     const partVertexCount = part.geometry.attributes.position.count
