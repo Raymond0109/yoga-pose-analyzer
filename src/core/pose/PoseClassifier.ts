@@ -23,18 +23,24 @@ interface PoseRule {
   rules: AngleRule[]
 }
 
-/** 10个基础体式的角度匹配规则 */
+/**
+ * 角度定义 (基于 AngleCalculator 的计算方式):
+ * - 膝/肘: 三点夹角，180°=伸直，90°=弯曲
+ * - 髋: hip-shoulder-knee，180°=站直，90°=坐姿
+ * - 肩: hip-shoulder-elbow，180°=手臂下垂，90°=平举，0°=举过头
+ */
+
 const POSE_RULES: PoseRule[] = [
   {
     id: 'tadasana',
     nameCN: '山式',
     rules: [
-      { joint: 'left_knee', minAngle: 160, maxAngle: 180, weight: 1.5 },
-      { joint: 'right_knee', minAngle: 160, maxAngle: 180, weight: 1.5 },
-      { joint: 'left_hip', minAngle: 160, maxAngle: 180, weight: 1.0 },
-      { joint: 'right_hip', minAngle: 160, maxAngle: 180, weight: 1.0 },
-      { joint: 'left_shoulder', minAngle: 0, maxAngle: 30, weight: 1.0 },
-      { joint: 'right_shoulder', minAngle: 0, maxAngle: 30, weight: 1.0 },
+      { joint: 'left_knee', minAngle: 165, maxAngle: 180, weight: 1.5 },
+      { joint: 'right_knee', minAngle: 165, maxAngle: 180, weight: 1.5 },
+      { joint: 'left_hip', minAngle: 165, maxAngle: 180, weight: 1.0 },
+      { joint: 'right_hip', minAngle: 165, maxAngle: 180, weight: 1.0 },
+      { joint: 'left_shoulder', minAngle: 160, maxAngle: 180, weight: 1.0 },  // 手臂下垂
+      { joint: 'right_shoulder', minAngle: 160, maxAngle: 180, weight: 1.0 },
     ],
   },
   {
@@ -43,42 +49,42 @@ const POSE_RULES: PoseRule[] = [
     rules: [
       { joint: 'left_knee', minAngle: 70, maxAngle: 110, weight: 2.0 },
       { joint: 'right_knee', minAngle: 160, maxAngle: 180, weight: 1.5 },
-      { joint: 'left_shoulder', minAngle: 70, maxAngle: 110, weight: 1.5 },
-      { joint: 'right_shoulder', minAngle: 70, maxAngle: 110, weight: 1.5 },
+      { joint: 'left_shoulder', minAngle: 80, maxAngle: 100, weight: 1.5 },  // 平举
+      { joint: 'right_shoulder', minAngle: 80, maxAngle: 100, weight: 1.5 },
     ],
   },
   {
     id: 'trikonasana',
     nameCN: '三角式',
     rules: [
-      { joint: 'left_knee', minAngle: 160, maxAngle: 180, weight: 1.0 },
-      { joint: 'right_knee', minAngle: 160, maxAngle: 180, weight: 1.0 },
+      { joint: 'left_knee', minAngle: 165, maxAngle: 180, weight: 1.0 },
+      { joint: 'right_knee', minAngle: 165, maxAngle: 180, weight: 1.0 },
       { joint: 'left_hip', minAngle: 100, maxAngle: 140, weight: 1.5 },
       { joint: 'right_hip', minAngle: 100, maxAngle: 140, weight: 1.5 },
-      { joint: 'left_shoulder', minAngle: 140, maxAngle: 180, weight: 1.0 },
-      { joint: 'right_shoulder', minAngle: 0, maxAngle: 40, weight: 1.0 },
+      { joint: 'left_shoulder', minAngle: 160, maxAngle: 180, weight: 1.0 },  // 一手向上
+      { joint: 'right_shoulder', minAngle: 30, maxAngle: 90, weight: 1.0 },   // 一手向下
     ],
   },
   {
     id: 'adho_mukha_svanasana',
     nameCN: '下犬式',
     rules: [
-      { joint: 'left_knee', minAngle: 160, maxAngle: 180, weight: 1.0 },
-      { joint: 'right_knee', minAngle: 160, maxAngle: 180, weight: 1.0 },
+      { joint: 'left_knee', minAngle: 165, maxAngle: 180, weight: 1.0 },
+      { joint: 'right_knee', minAngle: 165, maxAngle: 180, weight: 1.0 },
       { joint: 'left_hip', minAngle: 70, maxAngle: 110, weight: 2.0 },
       { joint: 'right_hip', minAngle: 70, maxAngle: 110, weight: 2.0 },
-      { joint: 'left_shoulder', minAngle: 140, maxAngle: 180, weight: 1.5 },
-      { joint: 'right_shoulder', minAngle: 140, maxAngle: 180, weight: 1.5 },
+      { joint: 'left_shoulder', minAngle: 150, maxAngle: 180, weight: 1.5 },  // 手臂伸直
+      { joint: 'right_shoulder', minAngle: 150, maxAngle: 180, weight: 1.5 },
     ],
   },
   {
     id: 'vrksasana',
     nameCN: '树式',
     rules: [
-      { joint: 'left_knee', minAngle: 160, maxAngle: 180, weight: 1.5 },
-      { joint: 'right_knee', minAngle: 20, maxAngle: 80, weight: 2.0 },
-      { joint: 'left_shoulder', minAngle: 140, maxAngle: 180, weight: 1.0 },
-      { joint: 'right_shoulder', minAngle: 140, maxAngle: 180, weight: 1.0 },
+      { joint: 'left_knee', minAngle: 165, maxAngle: 180, weight: 1.5 },   // 支撑腿伸直
+      { joint: 'right_knee', minAngle: 20, maxAngle: 80, weight: 2.0 },    // 弯曲腿
+      { joint: 'left_shoulder', minAngle: 150, maxAngle: 180, weight: 1.0 },
+      { joint: 'right_shoulder', minAngle: 150, maxAngle: 180, weight: 1.0 },
     ],
   },
   {
@@ -89,8 +95,8 @@ const POSE_RULES: PoseRule[] = [
       { joint: 'right_knee', minAngle: 70, maxAngle: 110, weight: 2.0 },
       { joint: 'left_hip', minAngle: 70, maxAngle: 110, weight: 1.5 },
       { joint: 'right_hip', minAngle: 70, maxAngle: 110, weight: 1.5 },
-      { joint: 'left_shoulder', minAngle: 150, maxAngle: 180, weight: 1.0 },
-      { joint: 'right_shoulder', minAngle: 150, maxAngle: 180, weight: 1.0 },
+      { joint: 'left_shoulder', minAngle: 160, maxAngle: 180, weight: 1.0 },  // 手臂上举
+      { joint: 'right_shoulder', minAngle: 160, maxAngle: 180, weight: 1.0 },
     ],
   },
   {
@@ -101,50 +107,49 @@ const POSE_RULES: PoseRule[] = [
       { joint: 'right_knee', minAngle: 70, maxAngle: 110, weight: 1.5 },
       { joint: 'left_hip', minAngle: 20, maxAngle: 70, weight: 2.0 },
       { joint: 'right_hip', minAngle: 20, maxAngle: 70, weight: 2.0 },
-      { joint: 'left_shoulder', minAngle: 120, maxAngle: 180, weight: 1.0 },
-      { joint: 'right_shoulder', minAngle: 120, maxAngle: 180, weight: 1.0 },
+      { joint: 'left_shoulder', minAngle: 150, maxAngle: 180, weight: 1.0 },
+      { joint: 'right_shoulder', minAngle: 150, maxAngle: 180, weight: 1.0 },
     ],
   },
   {
     id: 'bhujangasana',
     nameCN: '眼镜蛇式',
     rules: [
-      { joint: 'left_knee', minAngle: 160, maxAngle: 180, weight: 1.0 },
-      { joint: 'right_knee', minAngle: 160, maxAngle: 180, weight: 1.0 },
+      { joint: 'left_knee', minAngle: 165, maxAngle: 180, weight: 1.0 },
+      { joint: 'right_knee', minAngle: 165, maxAngle: 180, weight: 1.0 },
       { joint: 'left_elbow', minAngle: 130, maxAngle: 170, weight: 1.5 },
       { joint: 'right_elbow', minAngle: 130, maxAngle: 170, weight: 1.5 },
-      { joint: 'left_shoulder', minAngle: 20, maxAngle: 60, weight: 2.0 },
-      { joint: 'right_shoulder', minAngle: 20, maxAngle: 60, weight: 2.0 },
+      { joint: 'left_shoulder', minAngle: 60, maxAngle: 120, weight: 2.0 },   // 手臂支撑
+      { joint: 'right_shoulder', minAngle: 60, maxAngle: 120, weight: 2.0 },
     ],
   },
   {
     id: 'navasana',
     nameCN: '船式',
     rules: [
-      { joint: 'left_knee', minAngle: 160, maxAngle: 180, weight: 1.0 },
-      { joint: 'right_knee', minAngle: 160, maxAngle: 180, weight: 1.0 },
-      { joint: 'left_hip', minAngle: 20, maxAngle: 60, weight: 2.0 },
-      { joint: 'right_hip', minAngle: 20, maxAngle: 60, weight: 2.0 },
-      { joint: 'left_shoulder', minAngle: 10, maxAngle: 50, weight: 1.5 },
-      { joint: 'right_shoulder', minAngle: 10, maxAngle: 50, weight: 1.5 },
+      { joint: 'left_knee', minAngle: 165, maxAngle: 180, weight: 1.0 },
+      { joint: 'right_knee', minAngle: 165, maxAngle: 180, weight: 1.0 },
+      { joint: 'left_hip', minAngle: 30, maxAngle: 70, weight: 2.0 },
+      { joint: 'right_hip', minAngle: 30, maxAngle: 70, weight: 2.0 },
+      { joint: 'left_shoulder', minAngle: 30, maxAngle: 80, weight: 1.5 },
+      { joint: 'right_shoulder', minAngle: 30, maxAngle: 80, weight: 1.5 },
     ],
   },
   {
     id: 'savasana',
     nameCN: '挺尸式',
     rules: [
-      { joint: 'left_knee', minAngle: 160, maxAngle: 180, weight: 1.0 },
-      { joint: 'right_knee', minAngle: 160, maxAngle: 180, weight: 1.0 },
-      { joint: 'left_hip', minAngle: 160, maxAngle: 180, weight: 1.0 },
-      { joint: 'right_hip', minAngle: 160, maxAngle: 180, weight: 1.0 },
-      { joint: 'left_shoulder', minAngle: 0, maxAngle: 30, weight: 1.0 },
-      { joint: 'right_shoulder', minAngle: 0, maxAngle: 30, weight: 1.0 },
+      { joint: 'left_knee', minAngle: 170, maxAngle: 180, weight: 1.0 },
+      { joint: 'right_knee', minAngle: 170, maxAngle: 180, weight: 1.0 },
+      { joint: 'left_hip', minAngle: 170, maxAngle: 180, weight: 1.0 },
+      { joint: 'right_hip', minAngle: 170, maxAngle: 180, weight: 1.0 },
+      { joint: 'left_shoulder', minAngle: 170, maxAngle: 180, weight: 1.0 },
+      { joint: 'right_shoulder', minAngle: 170, maxAngle: 180, weight: 1.0 },
     ],
   },
 ]
 
 export class PoseClassifier {
-  /** 识别体式，返回置信度最高的结果 */
   classify(angles: JointAngle[]): ClassificationResult | null {
     const angleMap = new Map(angles.map((a) => [a.joint, a.angle]))
 
@@ -165,7 +170,6 @@ export class PoseClassifier {
           matchedWeight += rule.weight
           matchedCount++
         } else {
-          // 部分匹配：距离越近得分越高
           const center = (rule.minAngle + rule.maxAngle) / 2
           const range = (rule.maxAngle - rule.minAngle) / 2
           const distance = Math.abs(currentAngle - center)
@@ -186,15 +190,13 @@ export class PoseClassifier {
       }
     }
 
-    // 置信度太低则返回 null
-    if (bestResult && bestResult.confidence < 0.4) {
+    if (bestResult && bestResult.confidence < 0.35) {
       return null
     }
 
     return bestResult
   }
 
-  /** 获取所有体式的匹配分数 (用于调试) */
   classifyAll(angles: JointAngle[]): ClassificationResult[] {
     const angleMap = new Map(angles.map((a) => [a.joint, a.angle]))
     const results: ClassificationResult[] = []
@@ -223,13 +225,7 @@ export class PoseClassifier {
       }
 
       const confidence = totalWeight > 0 ? matchedWeight / totalWeight : 0
-
-      results.push({
-        poseId: pose.id,
-        confidence,
-        matchedAngles: matchedCount,
-        totalAngles: pose.rules.length,
-      })
+      results.push({ poseId: pose.id, confidence, matchedAngles: matchedCount, totalAngles: pose.rules.length })
     }
 
     return results.sort((a, b) => b.confidence - a.confidence)

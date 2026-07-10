@@ -186,8 +186,12 @@ export function App() {
             const classifier = getClassifier()
             const classification = classifier.classify(angles)
             setDetectedPose(classification)
-            if (classification && classification.confidence > 0.6) {
-              activePoseId = classification.poseId
+            if (classification) {
+              console.log('识别:', classification.poseId, '置信度:', (classification.confidence * 100).toFixed(0) + '%',
+                '匹配:', classification.matchedAngles + '/' + classification.totalAngles)
+              if (classification.confidence > 0.5) {
+                activePoseId = classification.poseId
+              }
             }
           }
 
