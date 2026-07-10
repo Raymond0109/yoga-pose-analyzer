@@ -114,10 +114,18 @@ export function App() {
     // 延迟初始化确保容器已渲染
     const timer = setTimeout(() => {
       if (!threeContainerRef.current) return
-      import('@/core/smpl/SMPLRenderer').then(({ SMPLRenderer }) => {
+      import('@/core/smpl/SMPLRenderer').then(async ({ SMPLRenderer }) => {
         if (threeContainerRef.current) {
           rendererRef.current = new SMPLRenderer(threeContainerRef.current)
           console.log('3D 渲染器已初始化')
+
+          // 加载SMPL测试模型
+          try {
+            await rendererRef.current.loadSMPLModel('/assets/models/smpl/SMPL_TEST.json')
+            console.log('SMPL模型已加载')
+          } catch (error) {
+            console.warn('SMPL模型加载失败，使用骨架模式:', error)
+          }
         }
       })
     }, 100)

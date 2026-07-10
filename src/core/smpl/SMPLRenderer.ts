@@ -13,7 +13,6 @@ const SKELETON_CONNECTIONS: [number, number][] = [
   [23, 24],                                   // 左髋-右髋
   [11, 23], [12, 24],                         // 肩-髋 (侧面)
   [11, 12], [23, 24],                         // 肩连线, 髋连线
-  // 脊柱 (用肩中点-髋中点近似)
   // 左臂
   [11, 13], [13, 15],                         // 左肩-左肘-左腕
   [15, 17], [15, 19], [15, 21],              // 左腕-左拇指-左小指-左食指
@@ -28,38 +27,32 @@ const SKELETON_CONNECTIONS: [number, number][] = [
   [28, 30], [28, 32],                         // 右踝-右脚跟-右脚尖
 ]
 
-// 骨骼 → 肌肉映射 (更完整的解剖学映射)
+// 骨骼 → 肌肉映射
 const BONE_TO_MUSCLE: Record<number, string> = {
-  // 躯干
-  0: 'abs',              // 鼻-左肩 (核心)
-  1: 'abs',              // 鼻-右肩 (核心)
-  // 左臂
-  2: 'deltoids_l',       // 左肩-左肘 (三角肌)
-  3: 'biceps_l',         // 左肘-左腕 (肱二头肌)
-  // 右臂
-  4: 'deltoids_r',       // 右肩-右肘 (三角肌)
-  5: 'biceps_r',         // 右肘-右腕 (肱二头肌)
-  // 躯干连接
-  6: 'abs',              // 左肩-右肩 (核心)
-  7: 'abs',              // 左髋-右髋 (核心)
-  8: 'abs',              // 左肩-左髋 (核心)
-  9: 'abs',              // 右肩-右髋 (核心)
-  // 左腿
-  10: 'quadriceps_l',    // 左髋-左膝 (股四头肌)
-  11: 'hamstrings_l',    // 左膝-左踝 (腘绳肌)
-  // 右腿
-  12: 'quadriceps_r',    // 右髋-右膝 (股四头肌)
-  13: 'hamstrings_r',    // 右膝-右踝 (腘绳肌)
-  // 脚部
-  14: 'calves_l',        // 左踝-左脚跟
-  15: 'calves_l',        // 左踝-左脚尖
-  16: 'calves_r',        // 右踝-右脚跟
-  17: 'calves_r',        // 右踝-右脚尖
+  0: 'abs', 1: 'abs',
+  2: 'deltoids_l', 3: 'biceps_l',
+  4: 'deltoids_r', 5: 'biceps_r',
+  6: 'abs', 7: 'abs', 8: 'abs', 9: 'abs',
+  10: 'quadriceps_l', 11: 'hamstrings_l',
+  12: 'quadriceps_r', 13: 'hamstrings_r',
+  14: 'calves_l', 15: 'calves_l',
+  16: 'calves_r', 17: 'calves_r',
 }
 
 const BONE_COLOR = 0x4a90d9
 const JOINT_COLOR = 0x52c41a
 const PROBLEM_COLOR = 0xff4d4f
+const SKIN_COLOR = 0xE8B89D
+
+/** SMPL模型数据接口 */
+interface SMPLModelData {
+  vertices_template: number[][]
+  faces: number[][]
+  J: number[][]
+  kintree_table: number[][]
+  num_vertices: number
+  num_joints: number
+}
 
 export class SMPLRenderer {
   private scene: THREE.Scene
@@ -70,6 +63,12 @@ export class SMPLRenderer {
   private bones: THREE.Mesh[] = []
   private container: HTMLElement
   private showMuscles = false
+  private showMesh = true
+
+  // SMPL模型相关
+  private smplModelData: SMPLModelData | null = null
+  private humanMesh: THREE.Mesh | null = null
+  private humanSkeleton: THREE.SkeletonHelper | null = null
 
   constructor(container: HTMLElement) {
     this.container = container
@@ -81,8 +80,8 @@ export class SMPLRenderer {
     this.scene.background = new THREE.Color(0x1a1a2e)
 
     this.camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100)
-    this.camera.position.set(0, 1.5, 3.5)
-    this.camera.lookAt(0, 1.2, 0)
+    this.camera.position.set(0, 1.2, 3.0)
+    this.camera.lookAt(0, 1.0, 0)
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true })
     this.renderer.setSize(width, height)
@@ -90,9 +89,10 @@ export class SMPLRenderer {
     container.appendChild(this.renderer.domElement)
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
-    this.controls.target.set(0, 1.2, 0)
+    this.controls.target.set(0, 1.0, 0)
     this.controls.enableDamping = true
 
+    // 光照
     this.scene.add(new THREE.AmbientLight(0xffffff, 0.6))
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.8)
     dirLight.position.set(2, 5, 3)
@@ -105,11 +105,11 @@ export class SMPLRenderer {
     this.animate()
   }
 
+  /** 初始化骨架 */
   private initSkeleton(): void {
     const jointGeo = new THREE.SphereGeometry(0.025, 12, 12)
     const jointMat = new THREE.MeshStandardMaterial({ color: JOINT_COLOR })
 
-    // 创建 33 个关节球
     for (let i = 0; i < 33; i++) {
       const mesh = new THREE.Mesh(jointGeo, jointMat.clone())
       mesh.visible = false
@@ -117,7 +117,6 @@ export class SMPLRenderer {
       this.joints.push(mesh)
     }
 
-    // 创建骨骼连接
     const boneMat = new THREE.MeshStandardMaterial({ color: BONE_COLOR })
     for (let i = 0; i < SKELETON_CONNECTIONS.length; i++) {
       const geo = new THREE.CylinderGeometry(0.012, 0.012, 1, 8)
@@ -130,20 +129,62 @@ export class SMPLRenderer {
     }
   }
 
+  /** 加载SMPL模型 */
+  async loadSMPLModel(modelPath: string): Promise<void> {
+    try {
+      const response = await fetch(modelPath)
+      if (!response.ok) {
+        throw new Error(`Failed to load model: ${response.statusText}`)
+      }
+      this.smplModelData = await response.json()
+      console.log('SMPL model loaded:', this.smplModelData?.num_vertices, 'vertices')
+    } catch (error) {
+      console.error('Failed to load SMPL model:', error)
+      throw error
+    }
+  }
+
+  /** 创建人体网格 */
+  private createHumanMesh(): void {
+    if (!this.smplModelData) return
+
+    const geometry = new THREE.BufferGeometry()
+
+    // 设置顶点
+    const vertices = new Float32Array(this.smplModelData.vertices_template.flat())
+    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
+
+    // 设置面片
+    const indices = new Uint32Array(this.smplModelData.faces.flat())
+    geometry.setIndex(new THREE.BufferAttribute(indices, 1))
+
+    // 计算法线
+    geometry.computeVertexNormals()
+
+    const material = new THREE.MeshStandardMaterial({
+      color: SKIN_COLOR,
+      roughness: 0.7,
+      metalness: 0.1,
+      side: THREE.DoubleSide,
+    })
+
+    this.humanMesh = new THREE.Mesh(geometry, material)
+    this.scene.add(this.humanMesh)
+  }
+
+  /** 更新姿态 */
   updatePose(landmarks: PoseLandmark[]): void {
     if (!landmarks || landmarks.length < 33) return
 
-    // 人体比例缩放 (Y轴放大以匹配真实比例)
-    const scaleX = 1.4   // 宽度收窄
-    const scaleY = 2.8   // 身高拉长
+    const scaleX = 1.4
+    const scaleY = 2.8
     const scaleZ = 1.0
 
+    // 更新关节位置
     for (let i = 0; i < 33; i++) {
       const lm = landmarks[i]
       if (!lm) continue
 
-      // MediaPipe: x(0→1), y(0→1上到下), z(深度)
-      // Three.js: x右, y上, z前
       const x = (lm.x - 0.5) * scaleX
       const y = (1 - lm.y) * scaleY
       const z = (lm.z || 0) * scaleZ
@@ -179,6 +220,48 @@ export class SMPLRenderer {
       this.bones[i].scale.set(1, 1, length)
       this.bones[i].lookAt(endVec)
     }
+
+    // 更新SMPL网格（如果已加载）
+    if (this.humanMesh && this.showMesh) {
+      this.updateHumanMesh(landmarks)
+    }
+  }
+
+  /** 更新人体网格姿态 */
+  private updateHumanMesh(landmarks: PoseLandmark[]): void {
+    if (!this.humanMesh || !this.smplModelData) return
+
+    // 简化版：根据关键关节位置调整网格
+    // 实际实现需要完整的SMPL前向传播
+
+    const scaleX = 1.4
+    const scaleY = 2.8
+    const scaleZ = 1.0
+
+    // 获取主要关节位置
+    const hipCenter = new THREE.Vector3(
+      ((landmarks[23].x + landmarks[24].x) / 2 - 0.5) * scaleX,
+      (1 - (landmarks[23].y + landmarks[24].y) / 2) * scaleY,
+      ((landmarks[23].z + landmarks[24].z) / 2) * scaleZ
+    )
+
+    // 移动网格到髋部中心
+    this.humanMesh.position.copy(hipCenter)
+
+    // 计算躯干方向
+    const shoulderCenter = new THREE.Vector3(
+      ((landmarks[11].x + landmarks[12].x) / 2 - 0.5) * scaleX,
+      (1 - (landmarks[11].y + landmarks[12].y) / 2) * scaleY,
+      ((landmarks[11].z + landmarks[12].z) / 2) * scaleZ
+    )
+
+    const up = new THREE.Vector3().subVectors(shoulderCenter, hipCenter).normalize()
+    const defaultUp = new THREE.Vector3(0, 1, 0)
+
+    // 计算旋转
+    const quaternion = new THREE.Quaternion()
+    quaternion.setFromUnitVectors(defaultUp, up)
+    this.humanMesh.quaternion.copy(quaternion)
   }
 
   /** 更新肌肉热力图 */
@@ -197,6 +280,27 @@ export class SMPLRenderer {
       mat.color.setRGB(color.r, color.g, color.b)
       mat.emissive.setRGB(color.r * 0.15, color.g * 0.15, color.b * 0.15)
     }
+
+    // 更新人体网格颜色
+    if (this.humanMesh && this.showMesh) {
+      this.updateMeshMuscleColor(tensions)
+    }
+  }
+
+  /** 更新网格肌肉颜色 */
+  private updateMeshMuscleColor(tensions: MuscleTensionData[]): void {
+    if (!this.humanMesh) return
+
+    const tensionMap = new Map(tensions.map((t) => [t.muscle, t.tension]))
+
+    // 计算平均紧张度
+    const avgTension = tensions.length > 0
+      ? tensions.reduce((s, t) => s + t.tension, 0) / tensions.length
+      : 0
+
+    const color = MuscleMapper.tensionToColor(avgTension)
+    const mat = this.humanMesh.material as THREE.MeshStandardMaterial
+    mat.color.setRGB(color.r, color.g, color.b)
   }
 
   /** 切换肌肉显示模式 */
@@ -208,19 +312,29 @@ export class SMPLRenderer {
         mat.color.setHex(BONE_COLOR)
         mat.emissive.setHex(0x000000)
       }
+      if (this.humanMesh) {
+        const mat = this.humanMesh.material as THREE.MeshStandardMaterial
+        mat.color.setHex(SKIN_COLOR)
+        mat.emissive.setHex(0x000000)
+      }
     }
   }
 
+  /** 切换网格显示模式 */
+  setShowMesh(show: boolean): void {
+    this.showMesh = show
+    if (this.humanMesh) {
+      this.humanMesh.visible = show
+    }
+  }
+
+  /** 高亮问题关节 */
   highlightProblemJoints(problemJoints: string[]): void {
     const jointNameToIndex: Record<string, number> = {
-      left_elbow: 13,
-      right_elbow: 14,
-      left_knee: 25,
-      right_knee: 26,
-      left_hip: 23,
-      right_hip: 24,
-      left_shoulder: 11,
-      right_shoulder: 12,
+      left_elbow: 13, right_elbow: 14,
+      left_knee: 25, right_knee: 26,
+      left_hip: 23, right_hip: 24,
+      left_shoulder: 11, right_shoulder: 12,
     }
 
     for (const [name, idx] of Object.entries(jointNameToIndex)) {
@@ -235,24 +349,28 @@ export class SMPLRenderer {
     }
   }
 
+  /** 重置相机 */
   resetCamera(): void {
     this.camera.position.set(0, 1.2, 3.0)
     this.controls.target.set(0, 1.0, 0)
     this.controls.update()
   }
 
+  /** 动画循环 */
   private animate = (): void => {
     requestAnimationFrame(this.animate)
     this.controls.update()
     this.renderer.render(this.scene, this.camera)
   }
 
+  /** 调整大小 */
   resize(width: number, height: number): void {
     this.camera.aspect = width / height
     this.camera.updateProjectionMatrix()
     this.renderer.setSize(width, height)
   }
 
+  /** 释放资源 */
   dispose(): void {
     this.renderer.dispose()
     this.controls.dispose()
