@@ -8,6 +8,7 @@ import { CorrectionEngine } from '@/core/comparison/CorrectionEngine'
 import { getStandardPose, STANDARD_POSES } from '@/core/comparison/StandardPoseDB'
 import { MuscleMapper } from '@/core/smpl/MuscleMapper'
 import { MusclePanel } from '@/components/MusclePanel'
+import { PoseScorer, type ScoreResult } from '@/core/scoring/PoseScorer'
 import { useAppStore } from '@/store/appStore'
 import type { InputSourceType } from '@/types/common'
 import type { MuscleTensionData } from '@/types/smpl'
@@ -17,6 +18,7 @@ let poseEstimator: MediaPipePose | null = null
 let inputManager: InputManager | null = null
 let poseClassifier: PoseClassifier | null = null
 let muscleMapper: MuscleMapper | null = null
+let poseScorer: PoseScorer | null = null
 
 function getMuscleMapper(): MuscleMapper {
   if (!muscleMapper) muscleMapper = new MuscleMapper()
@@ -26,6 +28,11 @@ function getMuscleMapper(): MuscleMapper {
 function getClassifier(): PoseClassifier {
   if (!poseClassifier) poseClassifier = new PoseClassifier()
   return poseClassifier
+}
+
+function getScorer(): PoseScorer {
+  if (!poseScorer) poseScorer = new PoseScorer()
+  return poseScorer
 }
 
 async function getPoseEstimator(): Promise<MediaPipePose> {
@@ -72,6 +79,7 @@ export function App() {
   const [smoothLevel, setSmoothLevel] = useState<number>(2)
   const [showMuscles, setShowMuscles] = useState<boolean>(false)
   const [muscleTensions, setMuscleTensions] = useState<MuscleTensionData[]>([])
+  const [scoreResult, setScoreResult] = useState<ScoreResult | null>(null)
   // 性能优化：帧处理节流
   const lastProcessTime = useRef<number>(0)
   const PROCESS_INTERVAL = 33 // ~30fps
@@ -213,6 +221,11 @@ export function App() {
             const compResult = comparator.compare(angles, standard)
             setComparisonResult(compResult)
             setScore(compResult.overallScore)
+
+            // 实时评分
+            const scorer = getScorer()
+            const scoreRes = scorer.calculateScore(angles, standard.targetAngles)
+            setScoreResult(scoreRes)
 
             const engine = new CorrectionEngine()
             const advices = engine.generateAdvice(compResult)

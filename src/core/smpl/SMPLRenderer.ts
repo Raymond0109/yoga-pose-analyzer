@@ -68,7 +68,8 @@ export class SMPLRenderer {
   // SMPL模型相关
   private smplModelData: SMPLModelData | null = null
   private humanMesh: THREE.Mesh | null = null
-  private humanSkeleton: THREE.SkeletonHelper | null = null
+  private meshCenter: THREE.Vector3 = new THREE.Vector3()
+  private meshSize: THREE.Vector3 = new THREE.Vector3()
 
   constructor(container: HTMLElement) {
     this.container = container
@@ -170,13 +171,12 @@ export class SMPLRenderer {
     // 计算法线
     geometry.computeVertexNormals()
 
-    // 计算包围盒用于定位
+    // 计算包围盒
     geometry.computeBoundingBox()
     const box = geometry.boundingBox!
-    const center = new THREE.Vector3()
-    box.getCenter(center)
-    console.log('Mesh bounding box:', box.min, box.max)
-    console.log('Mesh center:', center)
+    box.getCenter(this.meshCenter)
+    box.getSize(this.meshSize)
+    console.log('Mesh center:', this.meshCenter, 'size:', this.meshSize)
 
     const material = new THREE.MeshStandardMaterial({
       color: SKIN_COLOR,
@@ -186,12 +186,9 @@ export class SMPLRenderer {
     })
 
     this.humanMesh = new THREE.Mesh(geometry, material)
-    // 移动网格使中心对齐到原点
-    this.humanMesh.position.sub(center)
-    this.humanMesh.position.y += 1.0 // 抬高到人体高度
     this.scene.add(this.humanMesh)
 
-    console.log('Human mesh added to scene at', this.humanMesh.position)
+    console.log('Human mesh added to scene')
   }
 
   /** 更新姿态 */
@@ -253,37 +250,55 @@ export class SMPLRenderer {
   private updateHumanMesh(landmarks: PoseLandmark[]): void {
     if (!this.humanMesh || !this.smplModelData) return
 
-    // 简化版：根据关键关节位置调整网格
-    // 实际实现需要完整的SMPL前向传播
-
     const scaleX = 1.4
     const scaleY = 2.8
     const scaleZ = 1.0
 
-    // 获取主要关节位置
+    // 计算骨架的髋部中心位置
     const hipCenter = new THREE.Vector3(
       ((landmarks[23].x + landmarks[24].x) / 2 - 0.5) * scaleX,
       (1 - (landmarks[23].y + landmarks[24].y) / 2) * scaleY,
       ((landmarks[23].z + landmarks[24].z) / 2) * scaleZ
     )
 
-    // 移动网格到髋部中心
-    this.humanMesh.position.copy(hipCenter)
-
-    // 计算躯干方向
+    // 计算肩膀中心
     const shoulderCenter = new THREE.Vector3(
       ((landmarks[11].x + landmarks[12].x) / 2 - 0.5) * scaleX,
       (1 - (landmarks[11].y + landmarks[12].y) / 2) * scaleY,
       ((landmarks[11].z + landmarks[12].z) / 2) * scaleZ
     )
 
+    // 计算躯干长度 (肩膀到髋部)
+    const torsoLength = shoulderCenter.distanceTo(hipCenter)
+
+    // 计算网格需要的缩放比例
+    // 模型原始躯干长度大约是 meshSize.y 的一半
+    const modelTorsoLength = this.meshSize.y * 0.4
+    const scaleFactor = torsoLength / modelTorsoLength
+
+    // 设置网格缩放
+    this.humanMesh.scale.set(scaleFactor, scaleFactor, scaleFactor)
+
+    // 计算网格位置 (髋部中心减去模型中心的缩放偏移)
+    const scaledCenter = this.meshCenter.clone().multiplyScalar(scaleFactor)
+    this.humanMesh.position.set(
+      hipCenter.x - scaledCenter.x,
+      hipCenter.y - scaledCenter.y + this.meshSize.y * scaleFactor * 0.5,
+      hipCenter.z - scaledCenter.z
+    )
+
+    // 计算躯干方向用于旋转
     const up = new THREE.Vector3().subVectors(shoulderCenter, hipCenter).normalize()
     const defaultUp = new THREE.Vector3(0, 1, 0)
 
-    // 计算旋转
-    const quaternion = new THREE.Quaternion()
-    quaternion.setFromUnitVectors(defaultUp, up)
-    this.humanMesh.quaternion.copy(quaternion)
+    // 只在方向差异明显时才旋转
+    if (up.dot(defaultUp) < 0.99) {
+      const quaternion = new THREE.Quaternion()
+      quaternion.setFromUnitVectors(defaultUp, up)
+      this.humanMesh.quaternion.copy(quaternion)
+    } else {
+      this.humanMesh.quaternion.identity()
+    }
   }
 
   /** 更新肌肉热力图 */
