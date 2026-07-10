@@ -9,6 +9,7 @@ import { getStandardPose, STANDARD_POSES } from '@/core/comparison/StandardPoseD
 import { MuscleMapper } from '@/core/smpl/MuscleMapper'
 import { MusclePanel } from '@/components/MusclePanel'
 import { DebugPanel } from '@/components/DebugPanel'
+import { ScorePanel } from '@/components/ScorePanel'
 import { PoseScorer, type ScoreResult } from '@/core/scoring/PoseScorer'
 import { writeLog, downloadLog } from '@/utils/logger'
 import { useAppStore } from '@/store/appStore'
@@ -664,6 +665,8 @@ export function App() {
           />
           {/* 调试面板 */}
           <DebugPanel visible={showDebug} data={debugData} />
+          {/* 评分面板 */}
+          <ScorePanel scoreResult={scoreResult} visible={true} />
           {/* 肌肉紧张度面板 */}
           {showMuscles && muscleTensions.length > 0 && (
             <div style={styles.musclePanelOverlay}>
