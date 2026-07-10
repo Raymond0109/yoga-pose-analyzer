@@ -287,29 +287,40 @@ export class SMPLRenderer {
     // 躯干长度
     const torsoLength = Math.abs(shoulderY - hipY)
 
-    // 缩放比例 (模型原始躯干约0.66)
-    const scaleFactor = torsoLength / 0.66
+    // 缩放比例: 模型躯干长度约0.66, 缩放到实际躯干长度
+    const modelTorsoLength = 0.66
+    const scaleFactor = Math.max(0.3, Math.min(5, torsoLength / modelTorsoLength))
 
-    // 直接设置网格位置到髋部
-    this.humanMesh.position.set(hipX, hipY, hipZ)
+    // 计算模型中心偏移 (模型中心y=0.96, 底部y=0.3, 顶部y=1.62)
+    // 髋部在模型中的相对位置: y=0.8 在模型坐标系
+    const meshOffsetY = this.meshCenter.y - 0.8  // 约0.16
+
+    // 设置网格位置
+    this.humanMesh.position.set(
+      hipX,
+      hipY + meshOffsetY * scaleFactor,
+      hipZ
+    )
+
+    // 设置缩放
     this.humanMesh.scale.set(scaleFactor, scaleFactor, scaleFactor)
 
     // 计算躯干方向旋转
-    const up = { x: 0, y: 1, z: 0 }
-    const torsoDir = {
-      x: ((landmarks[11].x + landmarks[12].x) / 2 - 0.5) * scaleX - hipX,
-      y: shoulderY - hipY,
-      z: ((landmarks[11].z + landmarks[12].z) / 2) - hipZ
-    }
+    const shoulderX = ((landmarks[11].x + landmarks[12].x) / 2 - 0.5) * scaleX
+    const shoulderZ = ((landmarks[11].z + landmarks[12].z) / 2)
+    const torsoDir = { x: shoulderX - hipX, y: shoulderY - hipY, z: shoulderZ - hipZ }
     const torsoLen = Math.sqrt(torsoDir.x ** 2 + torsoDir.y ** 2 + torsoDir.z ** 2)
+    
     if (torsoLen > 0.01) {
       const dir = { x: torsoDir.x / torsoLen, y: torsoDir.y / torsoLen, z: torsoDir.z / torsoLen }
-      const dot = dir.x * up.x + dir.y * up.y + dir.z * up.z
+      const defaultUp = { x: 0, y: 1, z: 0 }
+      const dot = dir.x * defaultUp.x + dir.y * defaultUp.y + dir.z * defaultUp.z
+      
       if (Math.abs(dot) < 0.99) {
         const cross = {
-          x: up.y * dir.z - up.z * dir.y,
-          y: up.z * dir.x - up.x * dir.z,
-          z: up.x * dir.y - up.y * dir.x
+          x: defaultUp.y * dir.z - defaultUp.z * dir.y,
+          y: defaultUp.z * dir.x - defaultUp.x * dir.z,
+          z: defaultUp.x * dir.y - defaultUp.y * dir.x
         }
         const angle = Math.acos(Math.max(-1, Math.min(1, dot)))
         const crossLen = Math.sqrt(cross.x ** 2 + cross.y ** 2 + cross.z ** 2)
@@ -317,6 +328,8 @@ export class SMPLRenderer {
           const axis = new THREE.Vector3(cross.x / crossLen, cross.y / crossLen, cross.z / crossLen)
           this.humanMesh.quaternion.setFromAxisAngle(axis, angle)
         }
+      } else {
+        this.humanMesh.quaternion.identity()
       }
     }
   }
