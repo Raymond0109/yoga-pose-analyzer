@@ -456,6 +456,11 @@ export function App() {
             setComparisonResult(compResult)
             setScore(compResult.overallScore)
 
+            // 实时评分
+            const scorer = getScorer()
+            const scoreRes = scorer.calculateScore(angles, standard.targetAngles)
+            setScoreResult(scoreRes)
+
             const engine = new CorrectionEngine()
             const advices = engine.generateAdvice(compResult)
             setCorrections(advices)
