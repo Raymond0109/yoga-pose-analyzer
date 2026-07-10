@@ -41,24 +41,24 @@ export class SMPLRenderer {
   constructor(container: HTMLElement) {
     this.container = container
 
+    // 确保容器有尺寸
+    const width = container.clientWidth || 800
+    const height = container.clientHeight || 600
+
     this.scene = new THREE.Scene()
     this.scene.background = new THREE.Color(0x1a1a2e)
 
-    this.camera = new THREE.PerspectiveCamera(
-      50,
-      container.clientWidth / container.clientHeight,
-      0.1,
-      100
-    )
-    this.camera.position.set(0, 1.2, 3)
+    this.camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100)
+    this.camera.position.set(0, 1.0, 2.5)
+    this.camera.lookAt(0, 0.8, 0)
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true })
-    this.renderer.setSize(container.clientWidth, container.clientHeight)
+    this.renderer.setSize(width, height)
     this.renderer.setPixelRatio(window.devicePixelRatio)
     container.appendChild(this.renderer.domElement)
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
-    this.controls.target.set(0, 1, 0)
+    this.controls.target.set(0, 0.8, 0)
     this.controls.enableDamping = true
 
     this.scene.add(new THREE.AmbientLight(0xffffff, 0.6))
@@ -101,8 +101,16 @@ export class SMPLRenderer {
 
     for (let i = 0; i < 33; i++) {
       const lm = landmarks[i]
-      this.joints[i].position.set(lm.x - 0.5, -lm.y + 1, -lm.z)
-      this.joints[i].visible = lm.visibility > 0.3
+      // MediaPipe 坐标: x(0→1左到右), y(0→1上到下), z(深度)
+      // Three.js: x右, y上, z前
+      // 缩放到合适大小并居中
+      const scale = 2.0
+      this.joints[i].position.set(
+        (lm.x - 0.5) * scale,
+        (1 - lm.y) * scale,
+        (lm.z || 0) * scale
+      )
+      this.joints[i].visible = (lm.visibility ?? 0.5) > 0.3
     }
 
     for (let i = 0; i < SKELETON_CONNECTIONS.length; i++) {

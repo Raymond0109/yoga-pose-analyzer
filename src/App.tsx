@@ -100,12 +100,19 @@ export function App() {
 
   // 初始化 3D 渲染器
   useEffect(() => {
-    if (!threeContainerRef.current) return
-    import('@/core/smpl/SMPLRenderer').then(({ SMPLRenderer }) => {
-      rendererRef.current = new SMPLRenderer(threeContainerRef.current!)
-    })
+    // 延迟初始化确保容器已渲染
+    const timer = setTimeout(() => {
+      if (!threeContainerRef.current) return
+      import('@/core/smpl/SMPLRenderer').then(({ SMPLRenderer }) => {
+        if (threeContainerRef.current) {
+          rendererRef.current = new SMPLRenderer(threeContainerRef.current)
+          console.log('3D 渲染器已初始化')
+        }
+      })
+    }, 100)
 
     return () => {
+      clearTimeout(timer)
       rendererRef.current?.dispose()
     }
   }, [])
