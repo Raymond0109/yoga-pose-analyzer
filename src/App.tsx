@@ -7,8 +7,10 @@ import { PoseComparator } from '@/core/comparison/PoseComparator'
 import { CorrectionEngine } from '@/core/comparison/CorrectionEngine'
 import { getStandardPose, STANDARD_POSES } from '@/core/comparison/StandardPoseDB'
 import { MuscleMapper } from '@/core/smpl/MuscleMapper'
+import { MusclePanel } from '@/components/MusclePanel'
 import { useAppStore } from '@/store/appStore'
 import type { InputSourceType } from '@/types/common'
+import type { MuscleTensionData } from '@/types/smpl'
 
 // 全局单例
 let poseEstimator: MediaPipePose | null = null
@@ -69,6 +71,7 @@ export function App() {
   // 平滑强度 0-4: 0=无, 1=轻, 2=中, 3=强, 4=极强
   const [smoothLevel, setSmoothLevel] = useState<number>(2)
   const [showMuscles, setShowMuscles] = useState<boolean>(false)
+  const [muscleTensions, setMuscleTensions] = useState<MuscleTensionData[]>([])
   // 性能优化：帧处理节流
   const lastProcessTime = useRef<number>(0)
   const PROCESS_INTERVAL = 33 // ~30fps
@@ -219,6 +222,9 @@ export function App() {
             const mapper = getMuscleMapper()
             const tensions = mapper.calculateTension(angles)
             rendererRef.current?.updateMuscleHeatmap(tensions)
+            setMuscleTensions(tensions)
+          } else {
+            setMuscleTensions([])
           }
 
           // 绘制 2D 关键点叠加
@@ -396,6 +402,9 @@ export function App() {
             const mapper = getMuscleMapper()
             const tensions = mapper.calculateTension(angles)
             rendererRef.current?.updateMuscleHeatmap(tensions)
+            setMuscleTensions(tensions)
+          } else {
+            setMuscleTensions([])
           }
 
           drawPoseOverlay(frame.imageData as any, result.landmarks)
@@ -578,6 +587,12 @@ export function App() {
             ref={threeContainerRef}
             style={styles.threeContainer}
           />
+          {/* 肌肉紧张度面板 */}
+          {showMuscles && muscleTensions.length > 0 && (
+            <div style={styles.musclePanelOverlay}>
+              <MusclePanel tensions={muscleTensions} visible={true} />
+            </div>
+          )}
         </div>
       </div>
 
@@ -841,6 +856,14 @@ const styles: Record<string, React.CSSProperties> = {
   },
   rightPanel: {
     flex: 1,
+    position: 'relative',
+  },
+  musclePanelOverlay: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 220,
+    zIndex: 10,
   },
   threeContainer: {
     width: '100%',

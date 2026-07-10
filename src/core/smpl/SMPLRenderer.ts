@@ -28,16 +28,33 @@ const SKELETON_CONNECTIONS: [number, number][] = [
   [28, 30], [28, 32],                         // 右踝-右脚跟-右脚尖
 ]
 
-// 骨骼 → 肌肉映射
+// 骨骼 → 肌肉映射 (更完整的解剖学映射)
 const BONE_TO_MUSCLE: Record<number, string> = {
-  8: 'deltoids_l',     // 左肩-左肘
-  9: 'biceps_l',       // 左肘-左腕
-  12: 'deltoids_r',    // 右肩-右肘
-  13: 'biceps_r',      // 右肘-右腕
-  16: 'quadriceps_l',  // 左髋-左膝
-  17: 'hamstrings_l',  // 左膝-左踝
-  20: 'quadriceps_r',  // 右髋-右膝
-  21: 'hamstrings_r',  // 右膝-右踝
+  // 躯干
+  0: 'abs',              // 鼻-左肩 (核心)
+  1: 'abs',              // 鼻-右肩 (核心)
+  // 左臂
+  2: 'deltoids_l',       // 左肩-左肘 (三角肌)
+  3: 'biceps_l',         // 左肘-左腕 (肱二头肌)
+  // 右臂
+  4: 'deltoids_r',       // 右肩-右肘 (三角肌)
+  5: 'biceps_r',         // 右肘-右腕 (肱二头肌)
+  // 躯干连接
+  6: 'abs',              // 左肩-右肩 (核心)
+  7: 'abs',              // 左髋-右髋 (核心)
+  8: 'abs',              // 左肩-左髋 (核心)
+  9: 'abs',              // 右肩-右髋 (核心)
+  // 左腿
+  10: 'quadriceps_l',    // 左髋-左膝 (股四头肌)
+  11: 'hamstrings_l',    // 左膝-左踝 (腘绳肌)
+  // 右腿
+  12: 'quadriceps_r',    // 右髋-右膝 (股四头肌)
+  13: 'hamstrings_r',    // 右膝-右踝 (腘绳肌)
+  // 脚部
+  14: 'calves_l',        // 左踝-左脚跟
+  15: 'calves_l',        // 左踝-左脚尖
+  16: 'calves_r',        // 右踝-右脚跟
+  17: 'calves_r',        // 右踝-右脚尖
 }
 
 const BONE_COLOR = 0x4a90d9
