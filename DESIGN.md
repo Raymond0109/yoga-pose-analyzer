@@ -1495,6 +1495,48 @@ export const useAppStore = create<AppState>((set) => ({
 - 自定义 ShaderMaterial 实现颜色渐变
 - 支持肌肉收缩/舒张的动态效果
 
+### Phase 1.7: 体式数据质量提升与来源拓展 (新增)
+
+| 任务 | 优先级 | 预估工时 |
+|------|--------|----------|
+| 体式坐标z轴深度校准 | P0 | 2天 |
+| 常用10个体式验证 | P0 | 2天 |
+| 学术数据集集成 | P1 | 3天 |
+| SMPL模型标准数据 | P1 | 3天 |
+| 动作捕捉数据库参考 | P2 | 2天 |
+
+**详细说明**：
+
+#### 1. 体式坐标z轴深度校准
+- 当前数据库z轴信息不足，大部分体式z=0或简单估计
+- 补充每个体式的z轴深度信息
+- 建立z轴深度的估算规则（基于体式描述和解剖学知识）
+- 参考：身体前侧z>0，后侧z<0，中线z=0
+
+#### 2. 常用10个体式验证
+- 重点验证：山式、战士二式、三角式、下犬式、树式、幻椅式、眼镜蛇式、桥式、平板式、船式
+- 对比实际视频中的关键点位置
+- 调整偏差较大的坐标值
+
+#### 3. 学术数据集集成
+- **Yoga-82**: 82类瑜伽体式，含标签 (https://sites.google.com/view/yoga-82/home)
+- **Yoga-107**: 107类体式，5994张图像 (https://github.com/dhirensr/yoga-poses-dataset)
+- **AI Trainer Dataset**: 运动姿态关键点 (https://github.com/stonet2000/ai-trainer-dataset)
+- 用途：获取真实人体的关键点参考数据
+
+#### 4. SMPL模型标准数据
+- SMPL官方模型 (https://smpl.is.tue.mpg.de) - 参数化人体模板
+- AMASS数据集 (https://amass.is.tue.mpg.de) - 大规模动作捕捉数据
+- 用途：建立标准化的人体关键点坐标系
+
+#### 5. 动作捕捉数据库参考
+- CMU MoCap (http://mocap.cs.cmu.edu/) - 卡内基梅隆动作捕捉
+- Human3.6M (https://vision.imarobots.hu/h36m/) - 大规模人体姿态数据
+- MPI-FAUST (https://faust.is.tue.mpg.de/) - 人体扫描数据集
+- 用途：获取真实运动数据作为参考
+
+**详细调研报告**：`docs/pose-data-analysis.md`
+
 ### Phase 3: V2 (增强版) — 约 3-4 周
 
 **目标**：体验优化，扩展功能

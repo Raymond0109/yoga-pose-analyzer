@@ -7,6 +7,11 @@ import type { PoseLandmark } from '@/types/pose'
  * - 原点：髋部中心
  * - 单位：肩宽 = 1.0
  * - 坐标系：x(右), y(上), z(前)
+ *
+ * z轴深度说明：
+ * - z > 0: 身体前侧（靠近观察者）
+ * - z < 0: 身体后侧（远离观察者）
+ * - z = 0: 身体中线
  */
 
 export interface StandardPoseData {
@@ -18,7 +23,7 @@ export interface StandardPoseData {
   jointAngles: Record<string, number>
   difficulty: 'beginner' | 'intermediate' | 'advanced'
   category: string
-  muscles: string[]  // 主要涉及的肌肉群
+  muscles: string[]
 }
 
 function lm(x: number, y: number, z: number = 0) {
@@ -29,12 +34,21 @@ function cloneLandmarks(l: Array<{ x: number; y: number; z: number }>) {
   return l.map(p => ({ ...p }))
 }
 
-// 基础站立模板
+/**
+ * 基础站立模板 (z轴已校准)
+ * - 头部z=0.1 (略前倾)
+ * - 肩膀z=0 (中线)
+ * - 手臂z=0 (自然下垂)
+ * - 髋部z=0 (中线)
+ * - 膝盖z=0 (中线)
+ * - 脚踝z=0 (中线)
+ * - 脚趾z=0.15 (前伸)
+ */
 const BASE: Array<{ x: number; y: number; z: number }> = [
-  lm(0, 1.5, 0), lm(-0.05, 1.55, 0.1), lm(-0.08, 1.55, 0.1),
-  lm(-0.11, 1.55, 0.1), lm(0.05, 1.55, 0.1), lm(0.08, 1.55, 0.1),
-  lm(0.11, 1.55, 0.1), lm(-0.12, 1.52, 0.08), lm(0.12, 1.52, 0.08),
-  lm(0, 1.48, 0.05), lm(0, 1.48, 0.05),
+  lm(0, 1.5, 0.05), lm(-0.05, 1.55, 0.12), lm(-0.08, 1.55, 0.12),
+  lm(-0.11, 1.55, 0.12), lm(0.05, 1.55, 0.12), lm(0.08, 1.55, 0.12),
+  lm(0.11, 1.55, 0.12), lm(-0.12, 1.52, 0.08), lm(0.12, 1.52, 0.08),
+  lm(0, 1.48, 0.06), lm(0, 1.48, 0.06),
   lm(-0.2, 1.3, 0), lm(0.2, 1.3, 0),
   lm(-0.35, 1.1, 0), lm(0.35, 1.1, 0),
   lm(-0.45, 0.9, 0), lm(0.45, 0.9, 0),
@@ -49,7 +63,7 @@ const BASE: Array<{ x: number; y: number; z: number }> = [
 ]
 
 // ============================================================
-// 初级体式 (8个)
+// 初级体式 (10个)
 // ============================================================
 
 const tadasana: StandardPoseData = {
@@ -64,10 +78,12 @@ const vrksasana: StandardPoseData = {
   difficulty: 'beginner', category: '平衡', muscles: ['核心', '腿部', '臀部'],
   landmarks: (() => {
     const l = cloneLandmarks(BASE)
-    l[26] = { x: 0.15, y: 0.6, z: 0 }
-    l[28] = { x: 0.05, y: 0.55, z: 0.05 }
-    l[13] = { x: -0.15, y: 1.35, z: 0 }; l[15] = { x: -0.1, y: 1.5, z: 0 }
-    l[14] = { x: 0.15, y: 1.35, z: 0 }; l[16] = { x: 0.1, y: 1.5, z: 0 }
+    // 右腿弯曲，脚抵左大腿内侧
+    l[26] = { x: 0.15, y: 0.6, z: 0.05 }  // 右膝外展
+    l[28] = { x: 0.05, y: 0.55, z: 0.08 }  // 右踝靠近左大腿
+    // 双手合十上举
+    l[13] = { x: -0.15, y: 1.35, z: 0.05 }; l[15] = { x: -0.1, y: 1.5, z: 0.05 }
+    l[14] = { x: 0.15, y: 1.35, z: 0.05 }; l[16] = { x: 0.1, y: 1.5, z: 0.05 }
     return l
   })(),
   jointAngles: { left_knee: 175, right_knee: 45, left_hip: 175, right_hip: 60, left_shoulder: 160, right_shoulder: 160 },
@@ -78,13 +94,17 @@ const adho_mukha_svanasana: StandardPoseData = {
   difficulty: 'beginner', category: '倒置', muscles: ['腿部', '肩部', '核心'],
   landmarks: (() => {
     const l = cloneLandmarks(BASE)
-    l[23] = { x: -0.12, y: 1.1, z: -0.2 }; l[24] = { x: 0.12, y: 1.1, z: -0.2 }
-    l[11] = { x: -0.2, y: 1.0, z: 0.3 }; l[12] = { x: 0.2, y: 1.0, z: 0.3 }
-    l[13] = { x: -0.25, y: 0.8, z: 0.4 }; l[14] = { x: 0.25, y: 0.8, z: 0.4 }
-    l[15] = { x: -0.2, y: 0.6, z: 0.5 }; l[16] = { x: 0.2, y: 0.6, z: 0.5 }
-    l[0] = { x: 0, y: 0.7, z: 0.4 }
-    l[25] = { x: -0.12, y: 0.7, z: -0.4 }; l[26] = { x: 0.12, y: 0.7, z: -0.4 }
-    l[27] = { x: -0.12, y: 0.3, z: -0.6 }; l[28] = { x: 0.12, y: 0.3, z: -0.6 }
+    // 髋部抬高，身体呈倒V形
+    l[23] = { x: -0.12, y: 1.1, z: -0.15 }; l[24] = { x: 0.12, y: 1.1, z: -0.15 }
+    // 手臂向前伸直
+    l[11] = { x: -0.2, y: 1.0, z: 0.25 }; l[12] = { x: 0.2, y: 1.0, z: 0.25 }
+    l[13] = { x: -0.25, y: 0.8, z: 0.35 }; l[14] = { x: 0.25, y: 0.8, z: 0.35 }
+    l[15] = { x: -0.2, y: 0.6, z: 0.45 }; l[16] = { x: 0.2, y: 0.6, z: 0.45 }
+    // 头在手臂之间
+    l[0] = { x: 0, y: 0.7, z: 0.35 }
+    // 腿向后伸直
+    l[25] = { x: -0.12, y: 0.7, z: -0.35 }; l[26] = { x: 0.12, y: 0.7, z: -0.35 }
+    l[27] = { x: -0.12, y: 0.3, z: -0.55 }; l[28] = { x: 0.12, y: 0.3, z: -0.55 }
     return l
   })(),
   jointAngles: { left_knee: 175, right_knee: 175, left_hip: 90, right_hip: 90, left_shoulder: 170, right_shoulder: 170 },
@@ -95,8 +115,10 @@ const utkatasana: StandardPoseData = {
   difficulty: 'beginner', category: '站立', muscles: ['股四头肌', '臀大肌', '核心'],
   landmarks: (() => {
     const l = cloneLandmarks(BASE)
-    l[23] = { x: -0.1, y: 0.7, z: 0.1 }; l[24] = { x: 0.1, y: 0.7, z: 0.1 }
-    l[25] = { x: -0.15, y: 0.5, z: 0.15 }; l[26] = { x: 0.15, y: 0.5, z: 0.15 }
+    // 膝盖弯曲，身体后坐
+    l[23] = { x: -0.1, y: 0.7, z: 0.05 }; l[24] = { x: 0.1, y: 0.7, z: 0.05 }
+    l[25] = { x: -0.15, y: 0.5, z: 0.12 }; l[26] = { x: 0.15, y: 0.5, z: 0.12 }
+    // 双臂上举
     l[11] = { x: -0.18, y: 1.35, z: 0 }; l[12] = { x: 0.18, y: 1.35, z: 0 }
     l[13] = { x: -0.15, y: 1.55, z: 0 }; l[14] = { x: 0.15, y: 1.55, z: 0 }
     l[15] = { x: -0.1, y: 1.7, z: 0 }; l[16] = { x: 0.1, y: 1.7, z: 0 }
@@ -110,13 +132,16 @@ const balasana: StandardPoseData = {
   difficulty: 'beginner', category: '跪姿', muscles: ['背部', '臀部'],
   landmarks: (() => {
     const l = cloneLandmarks(BASE)
-    l[23] = { x: -0.1, y: 0.5, z: -0.1 }; l[24] = { x: 0.1, y: 0.5, z: -0.1 }
-    l[25] = { x: -0.15, y: 0.35, z: 0.1 }; l[26] = { x: 0.15, y: 0.35, z: 0.1 }
-    l[27] = { x: -0.15, y: 0.2, z: -0.1 }; l[28] = { x: 0.15, y: 0.2, z: -0.1 }
-    l[11] = { x: -0.15, y: 0.6, z: 0.2 }; l[12] = { x: 0.15, y: 0.6, z: 0.2 }
-    l[0] = { x: 0, y: 0.4, z: 0.4 }
-    l[13] = { x: -0.2, y: 0.5, z: 0.5 }; l[15] = { x: -0.2, y: 0.4, z: 0.8 }
-    l[14] = { x: 0.2, y: 0.5, z: 0.5 }; l[16] = { x: 0.2, y: 0.4, z: 0.8 }
+    // 跪坐
+    l[23] = { x: -0.1, y: 0.5, z: -0.08 }; l[24] = { x: 0.1, y: 0.5, z: -0.08 }
+    l[25] = { x: -0.15, y: 0.35, z: 0.08 }; l[26] = { x: 0.15, y: 0.35, z: 0.08 }
+    l[27] = { x: -0.15, y: 0.2, z: -0.08 }; l[28] = { x: 0.15, y: 0.2, z: -0.08 }
+    // 身体前屈
+    l[11] = { x: -0.15, y: 0.6, z: 0.15 }; l[12] = { x: 0.15, y: 0.6, z: 0.15 }
+    l[0] = { x: 0, y: 0.4, z: 0.35 }
+    // 手臂前伸
+    l[13] = { x: -0.2, y: 0.5, z: 0.45 }; l[15] = { x: -0.2, y: 0.4, z: 0.75 }
+    l[14] = { x: 0.2, y: 0.5, z: 0.45 }; l[16] = { x: 0.2, y: 0.4, z: 0.75 }
     return l
   })(),
   jointAngles: { left_knee: 90, right_knee: 90, left_hip: 45, right_hip: 45, left_shoulder: 160, right_shoulder: 160 },
@@ -127,13 +152,16 @@ const bhujangasana: StandardPoseData = {
   difficulty: 'beginner', category: '俯卧', muscles: ['背部', '手臂', '核心'],
   landmarks: (() => {
     const l = cloneLandmarks(BASE)
-    l[23] = { x: -0.1, y: 0.15, z: -0.1 }; l[24] = { x: 0.1, y: 0.15, z: -0.1 }
-    l[25] = { x: -0.1, y: 0.1, z: -0.3 }; l[26] = { x: 0.1, y: 0.1, z: -0.3 }
-    l[27] = { x: -0.1, y: 0.05, z: -0.5 }; l[28] = { x: 0.1, y: 0.05, z: -0.5 }
-    l[11] = { x: -0.2, y: 0.5, z: 0.1 }; l[12] = { x: 0.2, y: 0.5, z: 0.1 }
-    l[0] = { x: 0, y: 0.7, z: 0.15 }
-    l[13] = { x: -0.25, y: 0.4, z: 0.15 }; l[14] = { x: 0.25, y: 0.4, z: 0.15 }
-    l[15] = { x: -0.25, y: 0.3, z: 0.1 }; l[16] = { x: 0.25, y: 0.3, z: 0.1 }
+    // 俯卧，腿贴地
+    l[23] = { x: -0.1, y: 0.15, z: -0.08 }; l[24] = { x: 0.1, y: 0.15, z: -0.08 }
+    l[25] = { x: -0.1, y: 0.1, z: -0.28 }; l[26] = { x: 0.1, y: 0.1, z: -0.28 }
+    l[27] = { x: -0.1, y: 0.05, z: -0.48 }; l[28] = { x: 0.1, y: 0.05, z: -0.48 }
+    // 上身后弯
+    l[11] = { x: -0.2, y: 0.5, z: 0.08 }; l[12] = { x: 0.2, y: 0.5, z: 0.08 }
+    l[0] = { x: 0, y: 0.7, z: 0.12 }
+    // 手臂支撑
+    l[13] = { x: -0.25, y: 0.4, z: 0.12 }; l[14] = { x: 0.25, y: 0.4, z: 0.12 }
+    l[15] = { x: -0.25, y: 0.3, z: 0.08 }; l[16] = { x: 0.25, y: 0.3, z: 0.08 }
     return l
   })(),
   jointAngles: { left_knee: 175, right_knee: 175, left_hip: 160, right_hip: 160, left_shoulder: 100, right_shoulder: 100, left_elbow: 150, right_elbow: 150 },
@@ -144,13 +172,14 @@ const setu_bandhasana: StandardPoseData = {
   difficulty: 'beginner', category: '仰卧', muscles: ['臀大肌', '腿部', '背部'],
   landmarks: (() => {
     const l = cloneLandmarks(BASE)
-    l[0] = { x: 0, y: 0.2, z: -0.15 }
+    // 仰卧，臀部抬起
+    l[0] = { x: 0, y: 0.2, z: -0.12 }
     l[11] = { x: -0.2, y: 0.2, z: 0 }; l[12] = { x: 0.2, y: 0.2, z: 0 }
     l[23] = { x: -0.1, y: 0.5, z: 0 }; l[24] = { x: 0.1, y: 0.5, z: 0 }
-    l[25] = { x: -0.2, y: 0.35, z: 0.2 }; l[26] = { x: 0.2, y: 0.35, z: 0.2 }
-    l[27] = { x: -0.2, y: 0.1, z: 0.3 }; l[28] = { x: 0.2, y: 0.1, z: 0.3 }
-    l[13] = { x: -0.25, y: 0.15, z: 0 }; l[15] = { x: -0.15, y: 0.15, z: 0.1 }
-    l[14] = { x: 0.25, y: 0.15, z: 0 }; l[16] = { x: 0.15, y: 0.15, z: 0.1 }
+    l[25] = { x: -0.2, y: 0.35, z: 0.15 }; l[26] = { x: 0.2, y: 0.35, z: 0.15 }
+    l[27] = { x: -0.2, y: 0.1, z: 0.25 }; l[28] = { x: 0.2, y: 0.1, z: 0.25 }
+    l[13] = { x: -0.25, y: 0.15, z: 0 }; l[15] = { x: -0.15, y: 0.15, z: 0.08 }
+    l[14] = { x: 0.25, y: 0.15, z: 0 }; l[16] = { x: 0.15, y: 0.15, z: 0.08 }
     return l
   })(),
   jointAngles: { left_knee: 100, right_knee: 100, left_hip: 120, right_hip: 120, left_shoulder: 170, right_shoulder: 170 },
@@ -161,16 +190,34 @@ const ustrasana: StandardPoseData = {
   difficulty: 'beginner', category: '跪姿', muscles: ['髋屈肌', '腹部', '背部'],
   landmarks: (() => {
     const l = cloneLandmarks(BASE)
-    l[0] = { x: 0, y: 1.3, z: -0.2 }
-    l[11] = { x: -0.2, y: 1.1, z: -0.1 }; l[12] = { x: 0.2, y: 1.1, z: -0.1 }
+    // 跪立，身体后弯
+    l[0] = { x: 0, y: 1.3, z: -0.18 }
+    l[11] = { x: -0.2, y: 1.1, z: -0.08 }; l[12] = { x: 0.2, y: 1.1, z: -0.08 }
     l[23] = { x: -0.1, y: 0.6, z: 0 }; l[24] = { x: 0.1, y: 0.6, z: 0 }
-    l[25] = { x: -0.15, y: 0.4, z: 0.1 }; l[26] = { x: 0.15, y: 0.4, z: 0.1 }
+    l[25] = { x: -0.15, y: 0.4, z: 0.08 }; l[26] = { x: 0.15, y: 0.4, z: 0.08 }
     l[27] = { x: -0.15, y: 0.15, z: 0 }; l[28] = { x: 0.15, y: 0.15, z: 0 }
-    l[13] = { x: -0.2, y: 0.5, z: 0.1 }; l[15] = { x: -0.2, y: 0.5, z: 0.15 }
-    l[14] = { x: 0.2, y: 0.5, z: 0.1 }; l[16] = { x: 0.2, y: 0.5, z: 0.15 }
+    l[13] = { x: -0.2, y: 0.5, z: 0.08 }; l[15] = { x: -0.2, y: 0.5, z: 0.12 }
+    l[14] = { x: 0.2, y: 0.5, z: 0.08 }; l[16] = { x: 0.2, y: 0.5, z: 0.12 }
     return l
   })(),
   jointAngles: { left_knee: 100, right_knee: 100, left_hip: 150, right_hip: 150, left_shoulder: 130, right_shoulder: 130 },
+}
+
+const baddha_konasana: StandardPoseData = {
+  id: 'baddha_konasana', nameCN: '蝴蝶式', nameEN: 'Butterfly Pose', nameSanskrit: 'Baddha Konasana',
+  difficulty: 'beginner', category: '坐姿', muscles: ['髋部', '大腿内侧'],
+  landmarks: (() => {
+    const l = cloneLandmarks(BASE)
+    l[0] = { x: 0, y: 0.9, z: 0.05 }
+    l[11] = { x: -0.2, y: 0.8, z: 0 }; l[12] = { x: 0.2, y: 0.8, z: 0 }
+    l[23] = { x: -0.1, y: 0.45, z: 0 }; l[24] = { x: 0.1, y: 0.45, z: 0 }
+    l[25] = { x: -0.2, y: 0.35, z: 0.12 }; l[26] = { x: 0.2, y: 0.35, z: 0.12 }
+    l[27] = { x: -0.15, y: 0.35, z: 0.18 }; l[28] = { x: 0.15, y: 0.35, z: 0.18 }
+    l[13] = { x: -0.2, y: 0.55, z: 0.12 }; l[15] = { x: -0.15, y: 0.45, z: 0.18 }
+    l[14] = { x: 0.2, y: 0.55, z: 0.12 }; l[16] = { x: 0.15, y: 0.45, z: 0.18 }
+    return l
+  })(),
+  jointAngles: { left_knee: 110, right_knee: 110, left_hip: 80, right_hip: 80, left_shoulder: 150, right_shoulder: 150 },
 }
 
 const savasana: StandardPoseData = {
@@ -178,20 +225,20 @@ const savasana: StandardPoseData = {
   difficulty: 'beginner', category: '仰卧', muscles: ['全身放松'],
   landmarks: (() => {
     const l = cloneLandmarks(BASE)
-    l[0] = { x: 0, y: 0.15, z: -0.1 }
+    l[0] = { x: 0, y: 0.15, z: -0.08 }
     l[11] = { x: -0.2, y: 0.15, z: 0 }; l[12] = { x: 0.2, y: 0.15, z: 0 }
     l[23] = { x: -0.1, y: 0.15, z: 0 }; l[24] = { x: 0.1, y: 0.15, z: 0 }
     l[13] = { x: -0.3, y: 0.15, z: 0 }; l[15] = { x: -0.4, y: 0.12, z: 0 }
     l[14] = { x: 0.3, y: 0.15, z: 0 }; l[16] = { x: 0.4, y: 0.12, z: 0 }
-    l[25] = { x: -0.1, y: 0.12, z: 0.3 }; l[26] = { x: 0.1, y: 0.12, z: 0.3 }
-    l[27] = { x: -0.1, y: 0.1, z: 0.6 }; l[28] = { x: 0.1, y: 0.1, z: 0.6 }
+    l[25] = { x: -0.1, y: 0.12, z: 0.28 }; l[26] = { x: 0.1, y: 0.12, z: 0.28 }
+    l[27] = { x: -0.1, y: 0.1, z: 0.58 }; l[28] = { x: 0.1, y: 0.1, z: 0.58 }
     return l
   })(),
   jointAngles: { left_knee: 175, right_knee: 175, left_hip: 175, right_hip: 175, left_shoulder: 175, right_shoulder: 175 },
 }
 
 // ============================================================
-// 中级体式 (11个)
+// 中级体式 (8个)
 // ============================================================
 
 const virabhadrasana_i: StandardPoseData = {
@@ -199,9 +246,9 @@ const virabhadrasana_i: StandardPoseData = {
   difficulty: 'intermediate', category: '站立', muscles: ['股四头肌', '臀大肌', '髋屈肌'],
   landmarks: (() => {
     const l = cloneLandmarks(BASE)
-    l[23] = { x: -0.15, y: 0.65, z: 0.1 }; l[24] = { x: 0.15, y: 0.65, z: -0.1 }
-    l[25] = { x: -0.2, y: 0.5, z: 0.15 }; l[26] = { x: 0.15, y: 0.45, z: -0.2 }
-    l[27] = { x: -0.2, y: 0.05, z: 0.1 }; l[28] = { x: 0.15, y: 0.05, z: -0.3 }
+    l[23] = { x: -0.15, y: 0.65, z: 0.08 }; l[24] = { x: 0.15, y: 0.65, z: -0.08 }
+    l[25] = { x: -0.2, y: 0.5, z: 0.12 }; l[26] = { x: 0.15, y: 0.45, z: -0.18 }
+    l[27] = { x: -0.2, y: 0.05, z: 0.08 }; l[28] = { x: 0.15, y: 0.05, z: -0.28 }
     l[13] = { x: -0.1, y: 1.5, z: 0 }; l[15] = { x: -0.08, y: 1.7, z: 0 }
     l[14] = { x: 0.1, y: 1.5, z: 0 }; l[16] = { x: 0.08, y: 1.7, z: 0 }
     return l
@@ -214,12 +261,10 @@ const virabhadrasana_ii: StandardPoseData = {
   difficulty: 'intermediate', category: '站立', muscles: ['股四头肌', '三角肌', '核心'],
   landmarks: (() => {
     const l = cloneLandmarks(BASE)
-    l[25] = { x: -0.2, y: 0.5, z: 0.1 }; l[23] = { x: -0.15, y: 0.75, z: 0 }
-    l[26] = { x: 0.2, y: 0.45, z: -0.1 }
+    l[25] = { x: -0.2, y: 0.5, z: 0.08 }; l[23] = { x: -0.15, y: 0.75, z: 0 }
+    l[26] = { x: 0.2, y: 0.45, z: -0.08 }
     l[13] = { x: -0.5, y: 1.3, z: 0 }; l[15] = { x: -0.7, y: 1.3, z: 0 }
     l[14] = { x: 0.5, y: 1.3, z: 0 }; l[16] = { x: 0.7, y: 1.3, z: 0 }
-    l[17] = { x: -0.75, y: 1.3, z: 0 }; l[19] = { x: -0.73, y: 1.3, z: 0 }
-    l[18] = { x: 0.75, y: 1.3, z: 0 }; l[20] = { x: 0.73, y: 1.3, z: 0 }
     l[0] = { x: -0.05, y: 1.5, z: 0 }
     return l
   })(),
@@ -248,11 +293,11 @@ const utthita_parsvakonasana: StandardPoseData = {
   difficulty: 'intermediate', category: '站立', muscles: ['股四头肌', '侧腰', '核心'],
   landmarks: (() => {
     const l = cloneLandmarks(BASE)
-    l[23] = { x: -0.2, y: 0.6, z: 0.1 }; l[24] = { x: 0.2, y: 0.8, z: -0.1 }
-    l[25] = { x: -0.25, y: 0.5, z: 0.15 }; l[26] = { x: 0.2, y: 0.45, z: -0.1 }
+    l[23] = { x: -0.2, y: 0.6, z: 0.08 }; l[24] = { x: 0.2, y: 0.8, z: -0.08 }
+    l[25] = { x: -0.25, y: 0.5, z: 0.12 }; l[26] = { x: 0.2, y: 0.45, z: -0.08 }
     l[11] = { x: -0.15, y: 1.0, z: 0 }; l[12] = { x: 0.2, y: 1.1, z: 0 }
-    l[13] = { x: -0.2, y: 0.7, z: 0.1 }; l[15] = { x: -0.15, y: 0.5, z: 0.15 }
-    l[14] = { x: 0.3, y: 1.3, z: -0.1 }; l[16] = { x: 0.5, y: 1.5, z: -0.15 }
+    l[13] = { x: -0.2, y: 0.7, z: 0.08 }; l[15] = { x: -0.15, y: 0.5, z: 0.12 }
+    l[14] = { x: 0.3, y: 1.3, z: -0.08 }; l[16] = { x: 0.5, y: 1.5, z: -0.12 }
     l[0] = { x: 0, y: 1.1, z: 0 }
     return l
   })(),
@@ -264,13 +309,13 @@ const plank: StandardPoseData = {
   difficulty: 'intermediate', category: '俯卧', muscles: ['核心', '手臂', '肩部'],
   landmarks: (() => {
     const l = cloneLandmarks(BASE)
-    l[0] = { x: 0, y: 0.8, z: 0.3 }
-    l[11] = { x: -0.2, y: 0.8, z: 0.3 }; l[12] = { x: 0.2, y: 0.8, z: 0.3 }
-    l[23] = { x: -0.1, y: 0.75, z: -0.1 }; l[24] = { x: 0.1, y: 0.75, z: -0.1 }
-    l[25] = { x: -0.1, y: 0.7, z: -0.3 }; l[26] = { x: 0.1, y: 0.7, z: -0.3 }
-    l[27] = { x: -0.1, y: 0.65, z: -0.5 }; l[28] = { x: 0.1, y: 0.65, z: -0.5 }
-    l[13] = { x: -0.2, y: 0.7, z: 0.35 }; l[15] = { x: -0.2, y: 0.65, z: 0.4 }
-    l[14] = { x: 0.2, y: 0.7, z: 0.35 }; l[16] = { x: 0.2, y: 0.65, z: 0.4 }
+    l[0] = { x: 0, y: 0.8, z: 0.28 }
+    l[11] = { x: -0.2, y: 0.8, z: 0.28 }; l[12] = { x: 0.2, y: 0.8, z: 0.28 }
+    l[23] = { x: -0.1, y: 0.75, z: -0.08 }; l[24] = { x: 0.1, y: 0.75, z: -0.08 }
+    l[25] = { x: -0.1, y: 0.7, z: -0.28 }; l[26] = { x: 0.1, y: 0.7, z: -0.28 }
+    l[27] = { x: -0.1, y: 0.65, z: -0.48 }; l[28] = { x: 0.1, y: 0.65, z: -0.48 }
+    l[13] = { x: -0.2, y: 0.7, z: 0.32 }; l[15] = { x: -0.2, y: 0.65, z: 0.38 }
+    l[14] = { x: 0.2, y: 0.7, z: 0.32 }; l[16] = { x: 0.2, y: 0.65, z: 0.38 }
     return l
   })(),
   jointAngles: { left_knee: 175, right_knee: 175, left_hip: 170, right_hip: 170, left_shoulder: 170, right_shoulder: 170, left_elbow: 175, right_elbow: 175 },
@@ -284,10 +329,10 @@ const ardha_matsyendrasana: StandardPoseData = {
     l[0] = { x: 0.05, y: 0.9, z: 0 }
     l[11] = { x: -0.15, y: 0.8, z: 0 }; l[12] = { x: 0.15, y: 0.8, z: 0 }
     l[23] = { x: -0.1, y: 0.45, z: 0 }; l[24] = { x: 0.1, y: 0.45, z: 0 }
-    l[25] = { x: -0.2, y: 0.4, z: 0.15 }; l[26] = { x: 0.05, y: 0.45, z: 0.1 }
-    l[27] = { x: -0.2, y: 0.35, z: 0.2 }; l[28] = { x: -0.15, y: 0.4, z: 0.15 }
-    l[13] = { x: -0.1, y: 0.7, z: 0.15 }; l[15] = { x: 0.15, y: 0.7, z: 0.15 }
-    l[14] = { x: 0.1, y: 0.7, z: -0.1 }; l[16] = { x: -0.15, y: 0.6, z: -0.1 }
+    l[25] = { x: -0.2, y: 0.4, z: 0.12 }; l[26] = { x: 0.05, y: 0.45, z: 0.08 }
+    l[27] = { x: -0.2, y: 0.35, z: 0.18 }; l[28] = { x: -0.15, y: 0.4, z: 0.12 }
+    l[13] = { x: -0.1, y: 0.7, z: 0.12 }; l[15] = { x: 0.15, y: 0.7, z: 0.12 }
+    l[14] = { x: 0.1, y: 0.7, z: -0.08 }; l[16] = { x: -0.15, y: 0.6, z: -0.08 }
     return l
   })(),
   jointAngles: { left_knee: 100, right_knee: 100, left_hip: 90, right_hip: 90, left_shoulder: 130, right_shoulder: 130 },
@@ -298,33 +343,16 @@ const kapotasana: StandardPoseData = {
   difficulty: 'intermediate', category: '坐姿', muscles: ['髋屈肌', '臀部', '核心'],
   landmarks: (() => {
     const l = cloneLandmarks(BASE)
-    l[0] = { x: 0, y: 0.8, z: 0.1 }
+    l[0] = { x: 0, y: 0.8, z: 0.08 }
     l[11] = { x: -0.2, y: 0.7, z: 0 }; l[12] = { x: 0.2, y: 0.7, z: 0 }
     l[23] = { x: -0.1, y: 0.45, z: 0 }; l[24] = { x: 0.1, y: 0.45, z: 0 }
-    l[25] = { x: -0.2, y: 0.35, z: 0.15 }; l[26] = { x: 0.15, y: 0.4, z: -0.2 }
-    l[27] = { x: -0.2, y: 0.3, z: 0.2 }; l[28] = { x: 0.2, y: 0.35, z: -0.3 }
-    l[13] = { x: -0.25, y: 0.6, z: 0.1 }; l[15] = { x: -0.3, y: 0.55, z: 0.15 }
-    l[14] = { x: 0.25, y: 0.6, z: 0.1 }; l[16] = { x: 0.3, y: 0.55, z: 0.15 }
+    l[25] = { x: -0.2, y: 0.35, z: 0.12 }; l[26] = { x: 0.15, y: 0.4, z: -0.18 }
+    l[27] = { x: -0.2, y: 0.3, z: 0.18 }; l[28] = { x: 0.2, y: 0.35, z: -0.28 }
+    l[13] = { x: -0.25, y: 0.6, z: 0.08 }; l[15] = { x: -0.3, y: 0.55, z: 0.12 }
+    l[14] = { x: 0.25, y: 0.6, z: 0.08 }; l[16] = { x: 0.3, y: 0.55, z: 0.12 }
     return l
   })(),
   jointAngles: { left_knee: 100, right_knee: 160, left_hip: 90, right_hip: 160, left_shoulder: 150, right_shoulder: 150 },
-}
-
-const baddha_konasana: StandardPoseData = {
-  id: 'baddha_konasana', nameCN: '蝴蝶式', nameEN: 'Butterfly Pose', nameSanskrit: 'Baddha Konasana',
-  difficulty: 'beginner', category: '坐姿', muscles: ['髋部', '大腿内侧'],
-  landmarks: (() => {
-    const l = cloneLandmarks(BASE)
-    l[0] = { x: 0, y: 0.9, z: 0.05 }
-    l[11] = { x: -0.2, y: 0.8, z: 0 }; l[12] = { x: 0.2, y: 0.8, z: 0 }
-    l[23] = { x: -0.1, y: 0.45, z: 0 }; l[24] = { x: 0.1, y: 0.45, z: 0 }
-    l[25] = { x: -0.2, y: 0.35, z: 0.15 }; l[26] = { x: 0.2, y: 0.35, z: 0.15 }
-    l[27] = { x: -0.15, y: 0.35, z: 0.2 }; l[28] = { x: 0.15, y: 0.35, z: 0.2 }
-    l[13] = { x: -0.2, y: 0.55, z: 0.15 }; l[15] = { x: -0.15, y: 0.45, z: 0.2 }
-    l[14] = { x: 0.2, y: 0.55, z: 0.15 }; l[16] = { x: 0.15, y: 0.45, z: 0.2 }
-    return l
-  })(),
-  jointAngles: { left_knee: 110, right_knee: 110, left_hip: 80, right_hip: 80, left_shoulder: 150, right_shoulder: 150 },
 }
 
 const sarvangasana: StandardPoseData = {
@@ -337,15 +365,15 @@ const sarvangasana: StandardPoseData = {
     l[23] = { x: -0.1, y: 0.8, z: 0 }; l[24] = { x: 0.1, y: 0.8, z: 0 }
     l[25] = { x: -0.1, y: 1.2, z: 0 }; l[26] = { x: 0.1, y: 1.2, z: 0 }
     l[27] = { x: -0.1, y: 1.5, z: 0 }; l[28] = { x: 0.1, y: 1.5, z: 0 }
-    l[13] = { x: -0.15, y: 0.2, z: 0.1 }; l[15] = { x: -0.15, y: 0.3, z: 0.15 }
-    l[14] = { x: 0.15, y: 0.2, z: 0.1 }; l[16] = { x: 0.15, y: 0.3, z: 0.15 }
+    l[13] = { x: -0.15, y: 0.2, z: 0.08 }; l[15] = { x: -0.15, y: 0.3, z: 0.12 }
+    l[14] = { x: 0.15, y: 0.2, z: 0.08 }; l[16] = { x: 0.15, y: 0.3, z: 0.12 }
     return l
   })(),
   jointAngles: { left_knee: 175, right_knee: 175, left_hip: 175, right_hip: 175, left_shoulder: 150, right_shoulder: 150 },
 }
 
 // ============================================================
-// 高级体式 (8个)
+// 高级体式 (6个)
 // ============================================================
 
 const virabhadrasana_iii: StandardPoseData = {
@@ -354,12 +382,12 @@ const virabhadrasana_iii: StandardPoseData = {
   landmarks: (() => {
     const l = cloneLandmarks(BASE)
     l[23] = { x: -0.1, y: 0.7, z: 0 }; l[24] = { x: 0.1, y: 0.7, z: 0 }
-    l[25] = { x: -0.1, y: 0.45, z: 0 }; l[26] = { x: 0.3, y: 0.75, z: -0.2 }
-    l[27] = { x: -0.1, y: 0.05, z: 0 }; l[28] = { x: 0.5, y: 0.8, z: -0.3 }
-    l[11] = { x: -0.2, y: 1.2, z: 0.2 }; l[12] = { x: 0.2, y: 1.2, z: 0.2 }
-    l[13] = { x: -0.2, y: 1.1, z: 0.4 }; l[15] = { x: -0.2, y: 1.0, z: 0.6 }
-    l[14] = { x: 0.2, y: 1.1, z: 0.4 }; l[16] = { x: 0.2, y: 1.0, z: 0.6 }
-    l[0] = { x: 0, y: 1.1, z: 0.2 }
+    l[25] = { x: -0.1, y: 0.45, z: 0 }; l[26] = { x: 0.3, y: 0.75, z: -0.18 }
+    l[27] = { x: -0.1, y: 0.05, z: 0 }; l[28] = { x: 0.5, y: 0.8, z: -0.28 }
+    l[11] = { x: -0.2, y: 1.2, z: 0.18 }; l[12] = { x: 0.2, y: 1.2, z: 0.18 }
+    l[13] = { x: -0.2, y: 1.1, z: 0.38 }; l[15] = { x: -0.2, y: 1.0, z: 0.58 }
+    l[14] = { x: 0.2, y: 1.1, z: 0.38 }; l[16] = { x: 0.2, y: 1.0, z: 0.58 }
+    l[0] = { x: 0, y: 1.1, z: 0.18 }
     return l
   })(),
   jointAngles: { left_knee: 175, right_knee: 175, left_hip: 170, right_hip: 170, left_shoulder: 170, right_shoulder: 170 },
@@ -371,11 +399,11 @@ const natarajasana: StandardPoseData = {
   landmarks: (() => {
     const l = cloneLandmarks(BASE)
     l[23] = { x: -0.1, y: 0.7, z: 0 }; l[24] = { x: 0.1, y: 0.7, z: 0 }
-    l[25] = { x: -0.1, y: 0.45, z: 0 }; l[26] = { x: 0.15, y: 0.7, z: -0.2 }
-    l[27] = { x: -0.1, y: 0.05, z: 0 }; l[28] = { x: 0.2, y: 0.8, z: -0.3 }
+    l[25] = { x: -0.1, y: 0.45, z: 0 }; l[26] = { x: 0.15, y: 0.7, z: -0.18 }
+    l[27] = { x: -0.1, y: 0.05, z: 0 }; l[28] = { x: 0.2, y: 0.8, z: -0.28 }
     l[11] = { x: -0.2, y: 1.2, z: 0 }; l[12] = { x: 0.2, y: 1.3, z: 0 }
     l[13] = { x: -0.2, y: 1.4, z: 0 }; l[15] = { x: -0.2, y: 1.6, z: 0 }
-    l[14] = { x: 0.2, y: 1.2, z: -0.1 }; l[16] = { x: 0.2, y: 0.8, z: -0.25 }
+    l[14] = { x: 0.2, y: 1.2, z: -0.08 }; l[16] = { x: 0.2, y: 0.8, z: -0.22 }
     return l
   })(),
   jointAngles: { left_knee: 175, right_knee: 90, left_hip: 175, right_hip: 130, left_shoulder: 170, right_shoulder: 150 },
@@ -386,13 +414,13 @@ const chaturanga: StandardPoseData = {
   difficulty: 'advanced', category: '俯卧', muscles: ['肱三头肌', '核心', '肩部'],
   landmarks: (() => {
     const l = cloneLandmarks(BASE)
-    l[0] = { x: 0, y: 0.5, z: 0.3 }
-    l[11] = { x: -0.2, y: 0.5, z: 0.3 }; l[12] = { x: 0.2, y: 0.5, z: 0.3 }
-    l[23] = { x: -0.1, y: 0.45, z: -0.1 }; l[24] = { x: 0.1, y: 0.45, z: -0.1 }
-    l[25] = { x: -0.1, y: 0.4, z: -0.3 }; l[26] = { x: 0.1, y: 0.4, z: -0.3 }
-    l[27] = { x: -0.1, y: 0.35, z: -0.5 }; l[28] = { x: 0.1, y: 0.35, z: -0.5 }
-    l[13] = { x: -0.2, y: 0.4, z: 0.3 }; l[15] = { x: -0.2, y: 0.35, z: 0.3 }
-    l[14] = { x: 0.2, y: 0.4, z: 0.3 }; l[16] = { x: 0.2, y: 0.35, z: 0.3 }
+    l[0] = { x: 0, y: 0.5, z: 0.28 }
+    l[11] = { x: -0.2, y: 0.5, z: 0.28 }; l[12] = { x: 0.2, y: 0.5, z: 0.28 }
+    l[23] = { x: -0.1, y: 0.45, z: -0.08 }; l[24] = { x: 0.1, y: 0.45, z: -0.08 }
+    l[25] = { x: -0.1, y: 0.4, z: -0.28 }; l[26] = { x: 0.1, y: 0.4, z: -0.28 }
+    l[27] = { x: -0.1, y: 0.35, z: -0.48 }; l[28] = { x: 0.1, y: 0.35, z: -0.48 }
+    l[13] = { x: -0.2, y: 0.4, z: 0.28 }; l[15] = { x: -0.2, y: 0.35, z: 0.28 }
+    l[14] = { x: 0.2, y: 0.4, z: 0.28 }; l[16] = { x: 0.2, y: 0.35, z: 0.28 }
     return l
   })(),
   jointAngles: { left_knee: 175, right_knee: 175, left_hip: 175, right_hip: 175, left_shoulder: 100, right_shoulder: 100, left_elbow: 100, right_elbow: 100 },
@@ -404,12 +432,12 @@ const navasana: StandardPoseData = {
   landmarks: (() => {
     const l = cloneLandmarks(BASE)
     l[23] = { x: -0.1, y: 0.5, z: 0 }; l[24] = { x: 0.1, y: 0.5, z: 0 }
-    l[25] = { x: -0.15, y: 0.6, z: 0.3 }; l[26] = { x: 0.15, y: 0.6, z: 0.3 }
-    l[27] = { x: -0.2, y: 0.7, z: 0.5 }; l[28] = { x: 0.2, y: 0.7, z: 0.5 }
-    l[11] = { x: -0.18, y: 0.7, z: -0.1 }; l[12] = { x: 0.18, y: 0.7, z: -0.1 }
-    l[0] = { x: 0, y: 0.9, z: -0.1 }
-    l[13] = { x: -0.2, y: 0.7, z: 0.2 }; l[15] = { x: -0.2, y: 0.7, z: 0.4 }
-    l[14] = { x: 0.2, y: 0.7, z: 0.2 }; l[16] = { x: 0.2, y: 0.7, z: 0.4 }
+    l[25] = { x: -0.15, y: 0.6, z: 0.28 }; l[26] = { x: 0.15, y: 0.6, z: 0.28 }
+    l[27] = { x: -0.2, y: 0.7, z: 0.48 }; l[28] = { x: 0.2, y: 0.7, z: 0.48 }
+    l[11] = { x: -0.18, y: 0.7, z: -0.08 }; l[12] = { x: 0.18, y: 0.7, z: -0.08 }
+    l[0] = { x: 0, y: 0.9, z: -0.08 }
+    l[13] = { x: -0.2, y: 0.7, z: 0.18 }; l[15] = { x: -0.2, y: 0.7, z: 0.38 }
+    l[14] = { x: 0.2, y: 0.7, z: 0.18 }; l[16] = { x: 0.2, y: 0.7, z: 0.38 }
     return l
   })(),
   jointAngles: { left_knee: 175, right_knee: 175, left_hip: 50, right_hip: 50, left_shoulder: 60, right_shoulder: 60 },
@@ -420,13 +448,13 @@ const bakasana: StandardPoseData = {
   difficulty: 'advanced', category: '平衡', muscles: ['手臂', '核心', '肩部'],
   landmarks: (() => {
     const l = cloneLandmarks(BASE)
-    l[0] = { x: 0, y: 0.7, z: 0.2 }
-    l[11] = { x: -0.2, y: 0.65, z: 0.15 }; l[12] = { x: 0.2, y: 0.65, z: 0.15 }
-    l[23] = { x: -0.1, y: 0.6, z: 0.1 }; l[24] = { x: 0.1, y: 0.6, z: 0.1 }
-    l[25] = { x: -0.15, y: 0.55, z: 0.2 }; l[26] = { x: 0.15, y: 0.55, z: 0.2 }
-    l[27] = { x: -0.1, y: 0.5, z: 0.25 }; l[28] = { x: 0.1, y: 0.5, z: 0.25 }
-    l[13] = { x: -0.2, y: 0.55, z: 0.2 }; l[15] = { x: -0.2, y: 0.5, z: 0.25 }
-    l[14] = { x: 0.2, y: 0.55, z: 0.2 }; l[16] = { x: 0.2, y: 0.5, z: 0.25 }
+    l[0] = { x: 0, y: 0.7, z: 0.18 }
+    l[11] = { x: -0.2, y: 0.65, z: 0.12 }; l[12] = { x: 0.2, y: 0.65, z: 0.12 }
+    l[23] = { x: -0.1, y: 0.6, z: 0.08 }; l[24] = { x: 0.1, y: 0.6, z: 0.08 }
+    l[25] = { x: -0.15, y: 0.55, z: 0.18 }; l[26] = { x: 0.15, y: 0.55, z: 0.18 }
+    l[27] = { x: -0.1, y: 0.5, z: 0.22 }; l[28] = { x: 0.1, y: 0.5, z: 0.22 }
+    l[13] = { x: -0.2, y: 0.55, z: 0.18 }; l[15] = { x: -0.2, y: 0.5, z: 0.22 }
+    l[14] = { x: 0.2, y: 0.55, z: 0.18 }; l[16] = { x: 0.2, y: 0.5, z: 0.22 }
     return l
   })(),
   jointAngles: { left_knee: 110, right_knee: 110, left_hip: 90, right_hip: 90, left_shoulder: 120, right_shoulder: 120, left_elbow: 100, right_elbow: 100 },
@@ -442,8 +470,8 @@ const sirsasana: StandardPoseData = {
     l[23] = { x: -0.1, y: 1.0, z: 0 }; l[24] = { x: 0.1, y: 1.0, z: 0 }
     l[25] = { x: -0.1, y: 1.4, z: 0 }; l[26] = { x: 0.1, y: 1.4, z: 0 }
     l[27] = { x: -0.1, y: 1.7, z: 0 }; l[28] = { x: 0.1, y: 1.7, z: 0 }
-    l[13] = { x: -0.15, y: 0.2, z: 0.1 }; l[15] = { x: -0.15, y: 0.3, z: 0.15 }
-    l[14] = { x: 0.15, y: 0.2, z: 0.1 }; l[16] = { x: 0.15, y: 0.3, z: 0.15 }
+    l[13] = { x: -0.15, y: 0.2, z: 0.08 }; l[15] = { x: -0.15, y: 0.3, z: 0.12 }
+    l[14] = { x: 0.15, y: 0.2, z: 0.08 }; l[16] = { x: 0.15, y: 0.3, z: 0.12 }
     return l
   })(),
   jointAngles: { left_knee: 175, right_knee: 175, left_hip: 175, right_hip: 175, left_shoulder: 150, right_shoulder: 150 },
@@ -456,7 +484,7 @@ const sirsasana: StandardPoseData = {
 export const STANDARD_POSE_DATABASE: StandardPoseData[] = [
   // 初级
   tadasana, vrksasana, adho_mukha_svanasana, utkatasana,
-  balasana, bhujangasana, setu_bandhasana, ustrasana, savasana, baddha_konasana,
+  balasana, bhujangasana, setu_bandhasana, ustrasana, baddha_konasana, savasana,
   // 中级
   virabhadrasana_i, virabhadrasana_ii, trikonasana, utthita_parsvakonasana,
   plank, ardha_matsyendrasana, kapotasana, sarvangasana,
