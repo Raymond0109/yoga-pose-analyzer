@@ -9,6 +9,7 @@ import { getStandardPose, STANDARD_POSES } from '@/core/comparison/StandardPoseD
 import { MuscleMapper } from '@/core/smpl/MuscleMapper'
 import { MusclePanel } from '@/components/MusclePanel'
 import { PoseScorer, type ScoreResult } from '@/core/scoring/PoseScorer'
+import { writeLog } from '@/utils/logger'
 import { useAppStore } from '@/store/appStore'
 import type { InputSourceType } from '@/types/common'
 import type { MuscleTensionData } from '@/types/smpl'
@@ -94,18 +95,24 @@ export function App() {
 
   // 初始化
   useEffect(() => {
+    writeLog('=== App initialization started ===')
+    
     const init = async () => {
       try {
+        writeLog('Loading MediaPipe model...')
         setStatus('正在加载 MediaPipe 模型...')
         await getPoseEstimator()
+        writeLog('MediaPipe model loaded')
 
         // 获取摄像头列表
         const devices = await InputManager.getCameraDevices()
         setCameraDevices(devices)
+        writeLog('Camera devices found: ' + devices.length)
 
         setStatus('就绪 - 请启动摄像头')
+        writeLog('=== App initialization completed ===')
       } catch (err) {
-        console.error('初始化失败:', err)
+        writeLog('ERROR: Initialization failed: ' + String(err))
         setStatus('初始化失败: ' + (err as Error).message)
       }
     }
@@ -119,32 +126,40 @@ export function App() {
 
   // 初始化 3D 渲染器
   useEffect(() => {
+    writeLog('=== App mounted ===')
+    
     // 延迟初始化确保容器已渲染
     const timer = setTimeout(() => {
+      writeLog('Checking three container...')
+      
       if (!threeContainerRef.current) {
-        console.error('Three container ref is null')
+        writeLog('ERROR: Three container ref is null')
         return
       }
       
-      console.log('Initializing 3D renderer...')
+      writeLog('Three container found, initializing renderer...')
+      
       import('@/core/smpl/SMPLRenderer').then(async ({ SMPLRenderer }) => {
         if (!threeContainerRef.current) {
-          console.error('Three container ref became null')
+          writeLog('ERROR: Three container ref became null during import')
           return
         }
         
         try {
           rendererRef.current = new SMPLRenderer(threeContainerRef.current)
-          console.log('3D renderer initialized')
+          writeLog('3D renderer created successfully')
 
           // 加载SMPL测试模型
+          writeLog('Loading SMPL model...')
           await rendererRef.current.loadSMPLModel('/assets/models/smpl/SMPL_TEST.json')
-          console.log('SMPL model loaded successfully')
+          writeLog('SMPL model loaded successfully')
         } catch (error) {
-          console.error('Failed to initialize 3D renderer:', error)
+          writeLog('ERROR: Failed to initialize 3D renderer: ' + String(error))
         }
+      }).catch(error => {
+        writeLog('ERROR: Failed to import SMPLRenderer: ' + String(error))
       })
-    }, 100)
+    }, 500) // 增加延迟到500ms
 
     return () => {
       clearTimeout(timer)
