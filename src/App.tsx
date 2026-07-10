@@ -184,13 +184,12 @@ export function App() {
           let activePoseId = selectedPoseRef.current
           if (autoDetectRef.current) {
             const classifier = getClassifier()
-            const classification = classifier.classify(angles)
+            const classification = classifier.classify(angles, result.landmarks)
             setDetectedPose(classification)
             if (classification) {
               console.log('[PoseDetect]', classification.poseId,
                 (classification.confidence * 100).toFixed(0) + '%',
-                classification.matchedAngles + '/' + classification.totalAngles,
-                '角度:', angles.slice(0, 4).map(a => a.joint + ':' + a.angle.toFixed(0)).join(', '))
+                classification.matchedAngles + '/' + classification.totalAngles)
               if (classification.confidence > 0.5) {
                 activePoseId = classification.poseId
               }
@@ -363,7 +362,7 @@ export function App() {
           let activePoseId = selectedPoseRef.current
           if (autoDetectRef.current) {
             const classifier = getClassifier()
-            const classification = classifier.classify(angles)
+            const classification = classifier.classify(angles, result.landmarks)
             setDetectedPose(classification)
             if (classification) {
               console.log('[PoseDetect]', classification.poseId,
