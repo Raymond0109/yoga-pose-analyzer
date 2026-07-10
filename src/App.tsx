@@ -9,7 +9,7 @@ import { getStandardPose, STANDARD_POSES } from '@/core/comparison/StandardPoseD
 import { MuscleMapper } from '@/core/smpl/MuscleMapper'
 import { MusclePanel } from '@/components/MusclePanel'
 import { PoseScorer, type ScoreResult } from '@/core/scoring/PoseScorer'
-import { writeLog } from '@/utils/logger'
+import { writeLog, downloadLog } from '@/utils/logger'
 import { useAppStore } from '@/store/appStore'
 import type { InputSourceType } from '@/types/common'
 import type { MuscleTensionData } from '@/types/smpl'
@@ -543,6 +543,13 @@ export function App() {
             {smootherState === 'locked' ? '🔒 已锁定' : '🔓 跟踪中'}
           </span>
           <span style={styles.status}>{status}</span>
+          <button
+            style={{...styles.button, fontSize: 11, padding: '4px 8px'}}
+            onClick={downloadLog}
+            title="下载调试日志"
+          >
+            📋 日志
+          </button>
         </div>
       </div>
 
