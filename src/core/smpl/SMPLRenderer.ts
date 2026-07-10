@@ -4,24 +4,40 @@ import type { PoseLandmark } from '@/types/pose'
 import type { MuscleTensionData } from '@/types/smpl'
 import { MuscleMapper } from './MuscleMapper'
 
-// MediaPipe 33 个关键点的骨骼连接定义
+// MediaPipe 33 关键点骨骼连接 (完整定义)
 const SKELETON_CONNECTIONS: [number, number][] = [
-  [11, 12], [23, 24], [11, 23], [12, 24],
-  [11, 13], [13, 15], [12, 14], [14, 16],
-  [23, 25], [25, 27], [24, 26], [26, 28],
-  [0, 11], [0, 12],
+  // 头部
+  [0, 1], [0, 2], [1, 3], [2, 4],           // 鼻-左右眼-左右耳
+  // 躯干
+  [11, 12],                                   // 左肩-右肩
+  [23, 24],                                   // 左髋-右髋
+  [11, 23], [12, 24],                         // 肩-髋 (侧面)
+  [11, 12], [23, 24],                         // 肩连线, 髋连线
+  // 脊柱 (用肩中点-髋中点近似)
+  // 左臂
+  [11, 13], [13, 15],                         // 左肩-左肘-左腕
+  [15, 17], [15, 19], [15, 21],              // 左腕-左拇指-左小指-左食指
+  // 右臂
+  [12, 14], [14, 16],                         // 右肩-右肘-右腕
+  [16, 18], [16, 20], [16, 22],              // 右腕-右拇指-右小指-右食指
+  // 左腿
+  [23, 25], [25, 27],                         // 左髋-左膝-左踝
+  [27, 29], [27, 31],                         // 左踝-左脚跟-左脚尖
+  // 右腿
+  [24, 26], [26, 28],                         // 右髋-右膝-右踝
+  [28, 30], [28, 32],                         // 右踝-右脚跟-右脚尖
 ]
 
 // 骨骼 → 肌肉映射
 const BONE_TO_MUSCLE: Record<number, string> = {
-  4: 'quadriceps_l',   // 11-13 左肩-左肘 → 肱二头肌/三头肌
-  5: 'biceps_l',
-  6: 'quadriceps_r',
-  7: 'biceps_r',
-  8: 'quadriceps_l',   // 23-25 左髋-左膝
-  9: 'quadriceps_l',
-  10: 'quadriceps_r',
-  11: 'quadriceps_r',
+  8: 'deltoids_l',     // 左肩-左肘
+  9: 'biceps_l',       // 左肘-左腕
+  12: 'deltoids_r',    // 右肩-右肘
+  13: 'biceps_r',      // 右肘-右腕
+  16: 'quadriceps_l',  // 左髋-左膝
+  17: 'hamstrings_l',  // 左膝-左踝
+  20: 'quadriceps_r',  // 右髋-右膝
+  21: 'hamstrings_r',  // 右膝-右踝
 }
 
 const BONE_COLOR = 0x4a90d9
@@ -41,7 +57,6 @@ export class SMPLRenderer {
   constructor(container: HTMLElement) {
     this.container = container
 
-    // 确保容器有尺寸
     const width = container.clientWidth || 800
     const height = container.clientHeight || 600
 
@@ -49,8 +64,8 @@ export class SMPLRenderer {
     this.scene.background = new THREE.Color(0x1a1a2e)
 
     this.camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100)
-    this.camera.position.set(0, 1.0, 2.5)
-    this.camera.lookAt(0, 0.8, 0)
+    this.camera.position.set(0, 1.2, 3.0)
+    this.camera.lookAt(0, 1.0, 0)
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true })
     this.renderer.setSize(width, height)
@@ -58,7 +73,7 @@ export class SMPLRenderer {
     container.appendChild(this.renderer.domElement)
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
-    this.controls.target.set(0, 0.8, 0)
+    this.controls.target.set(0, 1.0, 0)
     this.controls.enableDamping = true
 
     this.scene.add(new THREE.AmbientLight(0xffffff, 0.6))
@@ -74,9 +89,10 @@ export class SMPLRenderer {
   }
 
   private initSkeleton(): void {
-    const jointGeo = new THREE.SphereGeometry(0.03, 16, 16)
+    const jointGeo = new THREE.SphereGeometry(0.025, 12, 12)
     const jointMat = new THREE.MeshStandardMaterial({ color: JOINT_COLOR })
 
+    // 创建 33 个关节球
     for (let i = 0; i < 33; i++) {
       const mesh = new THREE.Mesh(jointGeo, jointMat.clone())
       mesh.visible = false
@@ -84,9 +100,10 @@ export class SMPLRenderer {
       this.joints.push(mesh)
     }
 
+    // 创建骨骼连接
     const boneMat = new THREE.MeshStandardMaterial({ color: BONE_COLOR })
     for (let i = 0; i < SKELETON_CONNECTIONS.length; i++) {
-      const geo = new THREE.CylinderGeometry(0.015, 0.015, 1, 8)
+      const geo = new THREE.CylinderGeometry(0.012, 0.012, 1, 8)
       geo.translate(0, 0.5, 0)
       geo.rotateX(Math.PI / 2)
       const mesh = new THREE.Mesh(geo, boneMat.clone())
@@ -99,20 +116,26 @@ export class SMPLRenderer {
   updatePose(landmarks: PoseLandmark[]): void {
     if (!landmarks || landmarks.length < 33) return
 
+    // 人体比例缩放 (Y轴放大以匹配真实比例)
+    const scaleX = 1.8
+    const scaleY = 2.2
+    const scaleZ = 1.0
+
     for (let i = 0; i < 33; i++) {
       const lm = landmarks[i]
-      // MediaPipe 坐标: x(0→1左到右), y(0→1上到下), z(深度)
+      if (!lm) continue
+
+      // MediaPipe: x(0→1), y(0→1上到下), z(深度)
       // Three.js: x右, y上, z前
-      // 缩放到合适大小并居中
-      const scale = 2.0
-      this.joints[i].position.set(
-        (lm.x - 0.5) * scale,
-        (1 - lm.y) * scale,
-        (lm.z || 0) * scale
-      )
-      this.joints[i].visible = (lm.visibility ?? 0.5) > 0.3
+      const x = (lm.x - 0.5) * scaleX
+      const y = (1 - lm.y) * scaleY
+      const z = (lm.z || 0) * scaleZ
+
+      this.joints[i].position.set(x, y, z)
+      this.joints[i].visible = (lm.visibility ?? 0.5) > 0.2
     }
 
+    // 更新骨骼连接
     for (let i = 0; i < SKELETON_CONNECTIONS.length; i++) {
       const [start, end] = SKELETON_CONNECTIONS[i]
       const startJoint = this.joints[start]
@@ -129,6 +152,11 @@ export class SMPLRenderer {
       const endVec = endJoint.position
       const direction = new THREE.Vector3().subVectors(endVec, startVec)
       const length = direction.length()
+
+      if (length < 0.01) {
+        this.bones[i].visible = false
+        continue
+      }
 
       this.bones[i].position.copy(startVec)
       this.bones[i].scale.set(1, 1, length)
@@ -150,8 +178,7 @@ export class SMPLRenderer {
       const color = MuscleMapper.tensionToColor(tension)
       const mat = this.bones[i].material as THREE.MeshStandardMaterial
       mat.color.setRGB(color.r, color.g, color.b)
-      // 增加发光效果
-      mat.emissive.setRGB(color.r * 0.2, color.g * 0.2, color.b * 0.2)
+      mat.emissive.setRGB(color.r * 0.15, color.g * 0.15, color.b * 0.15)
     }
   }
 
@@ -159,7 +186,6 @@ export class SMPLRenderer {
   setShowMuscles(show: boolean): void {
     this.showMuscles = show
     if (!show) {
-      // 恢复默认骨骼颜色
       for (const bone of this.bones) {
         const mat = bone.material as THREE.MeshStandardMaterial
         mat.color.setHex(BONE_COLOR)
@@ -181,18 +207,20 @@ export class SMPLRenderer {
     }
 
     for (const [name, idx] of Object.entries(jointNameToIndex)) {
-      const mat = this.joints[idx].material as THREE.MeshStandardMaterial
-      if (problemJoints.includes(name)) {
-        mat.color.setHex(PROBLEM_COLOR)
-      } else {
-        mat.color.setHex(JOINT_COLOR)
+      if (idx < this.joints.length) {
+        const mat = this.joints[idx].material as THREE.MeshStandardMaterial
+        if (problemJoints.includes(name)) {
+          mat.color.setHex(PROBLEM_COLOR)
+        } else {
+          mat.color.setHex(JOINT_COLOR)
+        }
       }
     }
   }
 
   resetCamera(): void {
-    this.camera.position.set(0, 1.2, 3)
-    this.controls.target.set(0, 1, 0)
+    this.camera.position.set(0, 1.2, 3.0)
+    this.controls.target.set(0, 1.0, 0)
     this.controls.update()
   }
 
@@ -211,6 +239,8 @@ export class SMPLRenderer {
   dispose(): void {
     this.renderer.dispose()
     this.controls.dispose()
-    this.container.removeChild(this.renderer.domElement)
+    if (this.container.contains(this.renderer.domElement)) {
+      this.container.removeChild(this.renderer.domElement)
+    }
   }
 }
