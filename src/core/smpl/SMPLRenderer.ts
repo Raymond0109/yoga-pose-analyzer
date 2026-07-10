@@ -150,7 +150,12 @@ export class SMPLRenderer {
 
   /** 创建人体网格 */
   private createHumanMesh(): void {
-    if (!this.smplModelData) return
+    if (!this.smplModelData) {
+      console.warn('No SMPL model data')
+      return
+    }
+
+    console.log('Creating mesh with', this.smplModelData.num_vertices, 'vertices')
 
     const geometry = new THREE.BufferGeometry()
 
@@ -165,6 +170,14 @@ export class SMPLRenderer {
     // 计算法线
     geometry.computeVertexNormals()
 
+    // 计算包围盒用于定位
+    geometry.computeBoundingBox()
+    const box = geometry.boundingBox!
+    const center = new THREE.Vector3()
+    box.getCenter(center)
+    console.log('Mesh bounding box:', box.min, box.max)
+    console.log('Mesh center:', center)
+
     const material = new THREE.MeshStandardMaterial({
       color: SKIN_COLOR,
       roughness: 0.7,
@@ -173,7 +186,12 @@ export class SMPLRenderer {
     })
 
     this.humanMesh = new THREE.Mesh(geometry, material)
+    // 移动网格使中心对齐到原点
+    this.humanMesh.position.sub(center)
+    this.humanMesh.position.y += 1.0 // 抬高到人体高度
     this.scene.add(this.humanMesh)
+
+    console.log('Human mesh added to scene at', this.humanMesh.position)
   }
 
   /** 更新姿态 */
