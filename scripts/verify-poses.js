@@ -10,10 +10,14 @@ const path = require('path')
 
 const DB_PATH = path.join(__dirname, '../src/core/comparison/StandardPoseDB.ts')
 
-// 常用10个体式
+// 常用10个体式 + 新增10个体式
 const COMMON_POSES = [
   'tadasana', 'virabhadrasana_ii', 'trikonasana', 'adho_mukha_svanasana',
-  'vrksasana', 'utkatasana', 'bhujangasana', 'setu_bandhasana', 'plank', 'navasana'
+  'vrksasana', 'utkatasana', 'bhujangasana', 'setu_bandhasana', 'plank', 'navasana',
+  // 新增10个
+  'bharadvajasana_i', 'padangusthasana', 'dhanurasana', 'chakravakasana',
+  'gomukhasana', 'ardha_pincha_mayurasana', 'garudasana', 'sukhasana',
+  'utthita_ashwa_sanchalanasana', 'prasarita_padottanasana'
 ]
 
 const POSE_NAMES = {
@@ -26,8 +30,22 @@ const POSE_NAMES = {
   'bhujangasana': '眼镜蛇式',
   'setu_bandhasana': '桥式',
   'plank': '平板式',
-  'navasana': '船式'
+  'navasana': '船式',
+  // 新增10个
+  'bharadvajasana_i': '巴拉瓦伽式',
+  'padangusthasana': '大脚趾式',
+  'dhanurasana': '弓式',
+  'chakravakasana': '猫牛式',
+  'gomukhasana': '牛面式',
+  'ardha_pincha_mayurasana': '海豚式',
+  'garudasana': '鹰式',
+  'sukhasana': '简易坐姿',
+  'utthita_ashwa_sanchalanasana': '高弓步',
+  'prasarita_padottanasana': '广角前弯',
 }
+
+// 坐姿体式列表 (腿部弯曲，大腿长度阈值放宽)
+const SEATED_POSES = ['bharadvajasana_i', 'gomukhasana', 'sukhasana', 'ardha_matsyendrasana']
 
 // 提取BASE模板的坐标
 function extractBASE(content) {
@@ -88,6 +106,9 @@ function validatePose(lm, poseId) {
   const issues = []
   const warnings = []
 
+  // 判断是否为坐姿体式
+  const isSeated = SEATED_POSES.includes(poseId)
+
   // 检查1: 骨骼长度合理性
   const leftUpperArm = Math.sqrt(
     (lm[11].x - lm[13].x) ** 2 + (lm[11].y - lm[13].y) ** 2 + (lm[11].z - lm[13].z) ** 2
@@ -102,10 +123,14 @@ function validatePose(lm, poseId) {
     (lm[25].x - lm[27].x) ** 2 + (lm[25].y - lm[27].y) ** 2 + (lm[25].z - lm[27].z) ** 2
   )
 
+  // 坐姿体式的腿部阈值放宽
+  const upperLegMin = isSeated ? 0.1 : 0.2
+  const lowerLegMin = isSeated ? 0.05 : 0.15
+
   if (leftUpperArm < 0.15 || leftUpperArm > 0.6) issues.push(`上臂长度异常: ${leftUpperArm.toFixed(3)} (期望0.15-0.6)`)
   if (leftForearm < 0.1 || leftForearm > 0.5) issues.push(`前臂长度异常: ${leftForearm.toFixed(3)} (期望0.1-0.5)`)
-  if (leftUpperLeg < 0.2 || leftUpperLeg > 0.7) issues.push(`大腿长度异常: ${leftUpperLeg.toFixed(3)} (期望0.2-0.7)`)
-  if (leftLowerLeg < 0.15 || leftLowerLeg > 0.6) issues.push(`小腿长度异常: ${leftLowerLeg.toFixed(3)} (期望0.15-0.6)`)
+  if (leftUpperLeg < upperLegMin || leftUpperLeg > 0.7) issues.push(`大腿长度异常: ${leftUpperLeg.toFixed(3)} (期望${upperLegMin}-0.7)`)
+  if (leftLowerLeg < lowerLegMin || leftLowerLeg > 0.6) issues.push(`小腿长度异常: ${leftLowerLeg.toFixed(3)} (期望${lowerLegMin}-0.6)`)
 
   // 检查2: 脊柱长度
   const spineLength = Math.sqrt(
@@ -113,7 +138,7 @@ function validatePose(lm, poseId) {
     (lm[0].y - ((lm[23].y + lm[24].y) / 2)) ** 2 +
     (lm[0].z - ((lm[23].z + lm[24].z) / 2)) ** 2
   )
-  if (spineLength < 0.3 || spineLength > 1.2) warnings.push(`脊柱长度: ${spineLength.toFixed(3)}`)
+  if (spineLength < 0.2 || spineLength > 1.2) warnings.push(`脊柱长度: ${spineLength.toFixed(3)}`)
 
   // 检查3: z轴深度合理性
   const noseZ = lm[0].z

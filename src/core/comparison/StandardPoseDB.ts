@@ -489,6 +489,194 @@ const sirsasana: StandardPoseData = {
 }
 
 // ============================================================
+// 新增体式 (来自Yoga-107推荐)
+// ============================================================
+
+/** 巴拉瓦伽式：坐姿扭转 */
+const bharadvajasana_i: StandardPoseData = {
+  id: 'bharadvajasana_i', nameCN: '巴拉瓦伽式', nameEN: "Bharadvaja's Twist", nameSanskrit: 'Bharadvajasana I',
+  difficulty: 'beginner', category: '坐姿', muscles: ['脊柱旋转', '臀部', '核心'],
+  landmarks: (() => {
+    const l = cloneLandmarks(BASE)
+    l[0] = { x: 0.05, y: 0.9, z: 0 }
+    l[11] = { x: -0.15, y: 0.8, z: 0 }; l[12] = { x: 0.15, y: 0.8, z: 0 }
+    l[23] = { x: -0.15, y: 0.45, z: 0 }; l[24] = { x: 0.15, y: 0.45, z: 0 }
+    // 腿部交叉 (保持大腿长度)
+    l[25] = { x: -0.25, y: 0.35, z: 0.12 }; l[26] = { x: 0.05, y: 0.4, z: 0.08 }
+    l[27] = { x: -0.2, y: 0.35, z: 0.18 }; l[28] = { x: -0.15, y: 0.35, z: 0.12 }
+    l[13] = { x: -0.1, y: 0.7, z: 0.12 }; l[15] = { x: 0.15, y: 0.7, z: 0.12 }
+    l[14] = { x: 0.1, y: 0.7, z: -0.08 }; l[16] = { x: -0.15, y: 0.6, z: -0.08 }
+    return l
+  })(),
+  jointAngles: { left_knee: 100, right_knee: 100, left_hip: 90, right_hip: 90, left_shoulder: 130, right_shoulder: 130 },
+}
+
+/** 大脚趾式：站立前弯手抓大脚趾 */
+const padangusthasana: StandardPoseData = {
+  id: 'padangusthasana', nameCN: '大脚趾式', nameEN: 'Big Toe Pose', nameSanskrit: 'Padangusthasana',
+  difficulty: 'beginner', category: '站姿', muscles: ['腿后侧', '背部', '核心'],
+  landmarks: (() => {
+    const l = cloneLandmarks(BASE)
+    l[0] = { x: 0, y: 0.6, z: 0.15 }
+    l[11] = { x: -0.2, y: 0.7, z: 0.1 }; l[12] = { x: 0.2, y: 0.7, z: 0.1 }
+    l[13] = { x: -0.2, y: 0.5, z: 0.2 }; l[15] = { x: -0.15, y: 0.2, z: 0.15 }
+    l[14] = { x: 0.2, y: 0.5, z: 0.2 }; l[16] = { x: 0.15, y: 0.2, z: 0.15 }
+    return l
+  })(),
+  jointAngles: { left_knee: 175, right_knee: 175, left_hip: 45, right_hip: 45, left_shoulder: 150, right_shoulder: 150 },
+}
+
+/** 弓式：俯卧后弯 */
+const dhanurasana: StandardPoseData = {
+  id: 'dhanurasana', nameCN: '弓式', nameEN: 'Bow Pose', nameSanskrit: 'Dhanurasana',
+  difficulty: 'intermediate', category: '俯卧', muscles: ['背部', '腿部', '核心'],
+  landmarks: (() => {
+    const l = cloneLandmarks(BASE)
+    l[0] = { x: 0, y: 0.6, z: 0.2 }
+    l[11] = { x: -0.2, y: 0.5, z: 0.1 }; l[12] = { x: 0.2, y: 0.5, z: 0.1 }
+    l[23] = { x: -0.1, y: 0.15, z: -0.08 }; l[24] = { x: 0.1, y: 0.15, z: -0.08 }
+    // 腿部向后弯曲 (保持大腿长度)
+    l[25] = { x: -0.2, y: 0.35, z: -0.2 }; l[26] = { x: 0.2, y: 0.35, z: -0.2 }
+    l[27] = { x: -0.2, y: 0.55, z: -0.1 }; l[28] = { x: 0.2, y: 0.55, z: -0.1 }
+    l[13] = { x: -0.2, y: 0.4, z: -0.05 }; l[15] = { x: -0.15, y: 0.55, z: -0.1 }
+    l[14] = { x: 0.2, y: 0.4, z: -0.05 }; l[16] = { x: 0.15, y: 0.55, z: -0.1 }
+    return l
+  })(),
+  jointAngles: { left_knee: 120, right_knee: 120, left_hip: 160, right_hip: 160, left_shoulder: 140, right_shoulder: 140 },
+}
+
+/** 猫牛式：四点跪姿脊柱活动 */
+const chakravakasana: StandardPoseData = {
+  id: 'chakravakasana', nameCN: '猫牛式', nameEN: 'Cat Cow Pose', nameSanskrit: 'Chakravakasana',
+  difficulty: 'beginner', category: '跪姿', muscles: ['脊柱', '核心', '背部'],
+  landmarks: (() => {
+    const l = cloneLandmarks(BASE)
+    l[0] = { x: 0, y: 0.8, z: 0.25 }
+    l[11] = { x: -0.2, y: 0.75, z: 0.2 }; l[12] = { x: 0.2, y: 0.75, z: 0.2 }
+    l[23] = { x: -0.1, y: 0.55, z: -0.1 }; l[24] = { x: 0.1, y: 0.55, z: -0.1 }
+    l[25] = { x: -0.15, y: 0.4, z: 0.05 }; l[26] = { x: 0.15, y: 0.4, z: 0.05 }
+    l[27] = { x: -0.15, y: 0.2, z: -0.08 }; l[28] = { x: 0.15, y: 0.2, z: -0.08 }
+    // 手臂支撑 (保持上臂长度)
+    l[13] = { x: -0.2, y: 0.6, z: 0.28 }; l[15] = { x: -0.2, y: 0.45, z: 0.32 }
+    l[14] = { x: 0.2, y: 0.6, z: 0.28 }; l[16] = { x: 0.2, y: 0.45, z: 0.32 }
+    return l
+  })(),
+  jointAngles: { left_knee: 100, right_knee: 100, left_hip: 120, right_hip: 120, left_shoulder: 160, right_shoulder: 160 },
+}
+
+/** 牛面式：坐姿开髋 */
+const gomukhasana: StandardPoseData = {
+  id: 'gomukhasana', nameCN: '牛面式', nameEN: 'Cow Face Pose', nameSanskrit: 'Gomukhasana',
+  difficulty: 'intermediate', category: '坐姿', muscles: ['髋部', '肩部', '手臂'],
+  landmarks: (() => {
+    const l = cloneLandmarks(BASE)
+    l[0] = { x: 0, y: 0.9, z: 0.05 }
+    l[11] = { x: -0.15, y: 0.8, z: 0 }; l[12] = { x: 0.15, y: 0.8, z: 0 }
+    l[23] = { x: -0.15, y: 0.45, z: 0 }; l[24] = { x: 0.15, y: 0.45, z: 0 }
+    // 腿部交叉 (保持大腿长度)
+    l[25] = { x: -0.25, y: 0.35, z: 0.12 }; l[26] = { x: 0.05, y: 0.4, z: 0.08 }
+    l[27] = { x: -0.2, y: 0.35, z: 0.18 }; l[28] = { x: -0.15, y: 0.35, z: 0.12 }
+    l[13] = { x: -0.2, y: 0.55, z: 0.12 }; l[15] = { x: -0.15, y: 0.45, z: 0.18 }
+    l[14] = { x: 0.2, y: 0.55, z: 0.12 }; l[16] = { x: 0.15, y: 0.45, z: 0.18 }
+    return l
+  })(),
+  jointAngles: { left_knee: 110, right_knee: 110, left_hip: 80, right_hip: 80, left_shoulder: 150, right_shoulder: 150 },
+}
+
+/** 海豚式：前臂倒立准备 */
+const ardha_pincha_mayurasana: StandardPoseData = {
+  id: 'ardha_pincha_mayurasana', nameCN: '海豚式', nameEN: 'Dolphin Pose', nameSanskrit: 'Ardha Pincha Mayurasana',
+  difficulty: 'intermediate', category: '倒置', muscles: ['肩部', '核心', '腿部'],
+  landmarks: (() => {
+    const l = cloneLandmarks(BASE)
+    l[0] = { x: 0, y: 0.6, z: 0.35 }
+    l[11] = { x: -0.2, y: 0.8, z: 0.25 }; l[12] = { x: 0.2, y: 0.8, z: 0.25 }
+    l[13] = { x: -0.25, y: 0.6, z: 0.35 }; l[14] = { x: 0.25, y: 0.6, z: 0.35 }
+    l[15] = { x: -0.2, y: 0.45, z: 0.4 }; l[16] = { x: 0.2, y: 0.45, z: 0.4 }
+    l[23] = { x: -0.12, y: 1.1, z: -0.15 }; l[24] = { x: 0.12, y: 1.1, z: -0.15 }
+    l[25] = { x: -0.12, y: 0.7, z: -0.35 }; l[26] = { x: 0.12, y: 0.7, z: -0.35 }
+    l[27] = { x: -0.12, y: 0.3, z: -0.55 }; l[28] = { x: 0.12, y: 0.3, z: -0.55 }
+    return l
+  })(),
+  jointAngles: { left_knee: 175, right_knee: 175, left_hip: 90, right_hip: 90, left_shoulder: 160, right_shoulder: 160 },
+}
+
+/** 鹰式：站立平衡 */
+const garudasana: StandardPoseData = {
+  id: 'garudasana', nameCN: '鹰式', nameEN: 'Eagle Pose', nameSanskrit: 'Garudasana',
+  difficulty: 'intermediate', category: '平衡', muscles: ['腿部', '肩部', '核心'],
+  landmarks: (() => {
+    const l = cloneLandmarks(BASE)
+    l[23] = { x: -0.1, y: 0.7, z: 0 }; l[24] = { x: 0.1, y: 0.7, z: 0 }
+    l[25] = { x: -0.1, y: 0.45, z: 0 }; l[26] = { x: 0.15, y: 0.5, z: 0.05 }
+    l[27] = { x: -0.1, y: 0.05, z: 0 }; l[28] = { x: 0.05, y: 0.45, z: 0.08 }
+    // 手臂交叉 (保持上臂长度)
+    l[11] = { x: -0.15, y: 1.25, z: 0 }; l[12] = { x: 0.15, y: 1.25, z: 0 }
+    l[13] = { x: -0.2, y: 1.1, z: 0.05 }; l[15] = { x: 0.2, y: 1.1, z: 0.05 }
+    l[14] = { x: 0.2, y: 1.1, z: 0.05 }; l[16] = { x: -0.2, y: 1.1, z: 0.05 }
+    return l
+  })(),
+  jointAngles: { left_knee: 175, right_knee: 45, left_hip: 175, right_hip: 60, left_shoulder: 140, right_shoulder: 140 },
+}
+
+/** 简易坐姿 */
+const sukhasana: StandardPoseData = {
+  id: 'sukhasana', nameCN: '简易坐姿', nameEN: 'Easy Pose', nameSanskrit: 'Sukhasana',
+  difficulty: 'beginner', category: '坐姿', muscles: ['髋部', '背部'],
+  landmarks: (() => {
+    const l = cloneLandmarks(BASE)
+    l[0] = { x: 0, y: 0.9, z: 0.05 }
+    l[11] = { x: -0.2, y: 0.8, z: 0 }; l[12] = { x: 0.2, y: 0.8, z: 0 }
+    l[23] = { x: -0.15, y: 0.45, z: 0 }; l[24] = { x: 0.15, y: 0.45, z: 0 }
+    // 腿部交叉 (保持大腿长度)
+    l[25] = { x: -0.25, y: 0.35, z: 0.12 }; l[26] = { x: 0.25, y: 0.35, z: 0.12 }
+    l[27] = { x: -0.2, y: 0.35, z: 0.18 }; l[28] = { x: 0.2, y: 0.35, z: 0.18 }
+    l[13] = { x: -0.25, y: 0.6, z: 0.1 }; l[15] = { x: -0.2, y: 0.5, z: 0.15 }
+    l[14] = { x: 0.25, y: 0.6, z: 0.1 }; l[16] = { x: 0.2, y: 0.5, z: 0.15 }
+    return l
+  })(),
+  jointAngles: { left_knee: 110, right_knee: 110, left_hip: 80, right_hip: 80, left_shoulder: 150, right_shoulder: 150 },
+}
+
+/** 高弓步 */
+const utthita_ashwa_sanchalanasana: StandardPoseData = {
+  id: 'utthita_ashwa_sanchalanasana', nameCN: '高弓步', nameEN: 'High Lunge', nameSanskrit: 'Utthita Ashwa Sanchalanasana',
+  difficulty: 'beginner', category: '站姿', muscles: ['股四头肌', '臀大肌', '核心'],
+  landmarks: (() => {
+    const l = cloneLandmarks(BASE)
+    l[23] = { x: -0.15, y: 0.65, z: 0.08 }; l[24] = { x: 0.15, y: 0.7, z: -0.08 }
+    // 腿部 (保持大腿长度0.35)
+    l[25] = { x: -0.25, y: 0.4, z: 0.15 }; l[26] = { x: 0.2, y: 0.45, z: -0.2 }
+    l[27] = { x: -0.25, y: 0.05, z: 0.1 }; l[28] = { x: 0.2, y: 0.05, z: -0.3 }
+    l[11] = { x: -0.18, y: 1.3, z: 0 }; l[12] = { x: 0.18, y: 1.3, z: 0 }
+    l[13] = { x: -0.15, y: 1.5, z: 0 }; l[15] = { x: -0.1, y: 1.65, z: 0 }
+    l[14] = { x: 0.15, y: 1.5, z: 0 }; l[16] = { x: 0.1, y: 1.65, z: 0 }
+    return l
+  })(),
+  jointAngles: { left_knee: 95, right_knee: 170, left_hip: 95, right_hip: 160, left_shoulder: 170, right_shoulder: 170 },
+}
+
+/** 广角前弯 */
+const prasarita_padottanasana: StandardPoseData = {
+  id: 'prasarita_padottanasana', nameCN: '广角前弯', nameEN: 'Wide-Legged Forward Bend', nameSanskrit: 'Prasarita Padottanasana',
+  difficulty: 'beginner', category: '站姿', muscles: ['腿后侧', '背部', '髋部'],
+  landmarks: (() => {
+    const l = cloneLandmarks(BASE)
+    // 双腿分开
+    l[23] = { x: -0.3, y: 0.8, z: 0 }; l[24] = { x: 0.3, y: 0.8, z: 0 }
+    l[25] = { x: -0.3, y: 0.45, z: 0 }; l[26] = { x: 0.3, y: 0.45, z: 0 }
+    l[27] = { x: -0.3, y: 0.05, z: 0 }; l[28] = { x: 0.3, y: 0.05, z: 0 }
+    // 身体前弯
+    l[0] = { x: 0, y: 0.5, z: 0.25 }
+    l[11] = { x: -0.2, y: 0.6, z: 0.15 }; l[12] = { x: 0.2, y: 0.6, z: 0.15 }
+    l[13] = { x: -0.3, y: 0.4, z: 0.25 }; l[15] = { x: -0.25, y: 0.2, z: 0.2 }
+    l[14] = { x: 0.3, y: 0.4, z: 0.25 }; l[16] = { x: 0.25, y: 0.2, z: 0.2 }
+    return l
+  })(),
+  jointAngles: { left_knee: 175, right_knee: 175, left_hip: 60, right_hip: 60, left_shoulder: 150, right_shoulder: 150 },
+}
+
+// ============================================================
 // 导出
 // ============================================================
 
@@ -496,9 +684,11 @@ export const STANDARD_POSE_DATABASE: StandardPoseData[] = [
   // 初级
   tadasana, vrksasana, adho_mukha_svanasana, utkatasana,
   balasana, bhujangasana, setu_bandhasana, ustrasana, baddha_konasana, savasana,
+  bharadvajasana_i, padangusthasana, chakravakasana, sukhasana, utthita_ashwa_sanchalanasana, prasarita_padottanasana,
   // 中级
   virabhadrasana_i, virabhadrasana_ii, trikonasana, utthita_parsvakonasana,
   plank, ardha_matsyendrasana, kapotasana, sarvangasana,
+  dhanurasana, gomukhasana, ardha_pincha_mayurasana, garudasana,
   // 高级
   virabhadrasana_iii, natarajasana, chaturanga, navasana, bakasana, sirsasana,
 ]
