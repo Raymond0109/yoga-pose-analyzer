@@ -160,23 +160,10 @@ export function App() {
           rendererRef.current = new SMPLRenderer(threeContainerRef.current)
           writeLog('3D renderer created successfully')
 
-          // 尝试加载glTF模型，如果没有则使用测试模型
-          const modelPath = '/assets/models/human/model.glb'
-          try {
-            const response = await fetch(modelPath, { method: 'HEAD' })
-            if (response.ok) {
-              writeLog('Loading glTF human model...')
-              await rendererRef.current.loadHumanModel(modelPath)
-              writeLog('glTF human model loaded')
-            } else {
-              throw new Error('Model not found')
-            }
-          } catch {
-            // 没有外部模型，使用测试模型
-            writeLog('No external model found, loading test model...')
-            rendererRef.current.loadTestModel()
-            writeLog('Test model loaded')
-          }
+          // 直接加载测试模型
+          writeLog('Loading test human model...')
+          rendererRef.current.loadTestModel()
+          writeLog('Test model loaded')
         } catch (error) {
           writeLog('ERROR: Failed to initialize 3D renderer: ' + String(error))
         }
