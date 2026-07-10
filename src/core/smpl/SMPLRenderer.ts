@@ -189,8 +189,14 @@ export class SMPLRenderer {
   }
 
   /** 更新姿态 */
-  updatePose(landmarks: PoseLandmark[]): void {
-    if (!landmarks || landmarks.length < 33) return
+  updatePose(landmarks: PoseLandmark[]): {
+    hipCenter: { x: number; y: number; z: number }
+    shoulderCenter: { x: number; y: number; z: number }
+    meshPosition: { x: number; y: number; z: number }
+    meshScale: number
+    torsoLength: number
+  } | null {
+    if (!landmarks || landmarks.length < 33) return null
 
     const scaleX = 1.4
     const scaleY = 2.8
@@ -237,10 +243,29 @@ export class SMPLRenderer {
       this.bones[i].lookAt(endVec)
     }
 
-    // 更新SMPL网格（如果已加载）
+    // 计算调试数据
+    const hipX = ((landmarks[23].x + landmarks[24].x) / 2 - 0.5) * scaleX
+    const hipY = (1 - (landmarks[23].y + landmarks[24].y) / 2) * scaleY
+    const hipZ = ((landmarks[23].z + landmarks[24].z) / 2)
+    const shoulderY = (1 - (landmarks[11].y + landmarks[12].y) / 2) * scaleY
+    const shoulderX = ((landmarks[11].x + landmarks[12].x) / 2 - 0.5) * scaleX
+    const torsoLength = Math.abs(shoulderY - hipY)
+
+    // 更新SMPL网格
     if (this.humanMesh && this.showMesh) {
-      console.log('Updating SMPL mesh...')
       this.updateHumanMesh(landmarks)
+    }
+
+    return {
+      hipCenter: { x: hipX, y: hipY, z: hipZ },
+      shoulderCenter: { x: shoulderX, y: shoulderY, z: hipZ },
+      meshPosition: this.humanMesh ? { 
+        x: this.humanMesh.position.x, 
+        y: this.humanMesh.position.y, 
+        z: this.humanMesh.position.z 
+      } : { x: 0, y: 0, z: 0 },
+      meshScale: this.humanMesh ? this.humanMesh.scale.x : 1,
+      torsoLength,
     }
   }
 

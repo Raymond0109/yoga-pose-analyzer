@@ -8,6 +8,7 @@ import { CorrectionEngine } from '@/core/comparison/CorrectionEngine'
 import { getStandardPose, STANDARD_POSES } from '@/core/comparison/StandardPoseDB'
 import { MuscleMapper } from '@/core/smpl/MuscleMapper'
 import { MusclePanel } from '@/components/MusclePanel'
+import { DebugPanel } from '@/components/DebugPanel'
 import { PoseScorer, type ScoreResult } from '@/core/scoring/PoseScorer'
 import { writeLog, downloadLog } from '@/utils/logger'
 import { useAppStore } from '@/store/appStore'
@@ -81,6 +82,15 @@ export function App() {
   const [showMuscles, setShowMuscles] = useState<boolean>(false)
   const [muscleTensions, setMuscleTensions] = useState<MuscleTensionData[]>([])
   const [scoreResult, setScoreResult] = useState<ScoreResult | null>(null)
+  const [showDebug, setShowDebug] = useState<boolean>(true)
+  const [debugData, setDebugData] = useState({
+    hipCenter: { x: 0, y: 0, z: 0 },
+    shoulderCenter: { x: 0, y: 0, z: 0 },
+    meshPosition: { x: 0, y: 0, z: 0 },
+    meshScale: 1,
+    torsoLength: 0,
+    frameCount: 0,
+  })
   // 性能优化：帧处理节流
   const lastProcessTime = useRef<number>(0)
   const PROCESS_INTERVAL = 33 // ~30fps
@@ -218,7 +228,13 @@ export function App() {
 
           // 更新 3D 渲染
           if (rendererRef.current) {
-            rendererRef.current.updatePose(result.landmarks)
+            const debug = rendererRef.current.updatePose(result.landmarks)
+            if (debug) {
+              setDebugData(prev => ({
+                ...debug,
+                frameCount: prev.frameCount + 1,
+              }))
+            }
           }
 
           // 计算角度和对比
@@ -640,6 +656,8 @@ export function App() {
             ref={threeContainerRef}
             style={styles.threeContainer}
           />
+          {/* 调试面板 */}
+          <DebugPanel visible={showDebug} data={debugData} />
           {/* 肌肉紧张度面板 */}
           {showMuscles && muscleTensions.length > 0 && (
             <div style={styles.musclePanelOverlay}>
