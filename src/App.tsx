@@ -511,14 +511,17 @@ export function App() {
       const width = (source as HTMLVideoElement).videoWidth || (source as HTMLImageElement).naturalWidth || 640
       const height = (source as HTMLVideoElement).videoHeight || (source as HTMLImageElement).naturalHeight || 480
 
-      canvas.width = width
-      canvas.height = height
+      // 使用固定分辨率，避免缩放导致线条变细
+      const displayWidth = canvas.clientWidth || width
+      const displayHeight = canvas.clientHeight || height
+      canvas.width = displayWidth
+      canvas.height = displayHeight
 
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
       // 如果是图片源，先绘制图片到 canvas
       if (source instanceof HTMLImageElement) {
-        ctx.drawImage(source, 0, 0, width, height)
+        ctx.drawImage(source, 0, 0, canvas.width, canvas.height)
       }
 
       // 绘制关键点
