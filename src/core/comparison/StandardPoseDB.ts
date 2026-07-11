@@ -124,7 +124,13 @@ const adho_mukha_svanasana: StandardPoseData = {
     l[27] = { x: -0.12, y: 0.3, z: -0.55 }; l[28] = { x: 0.12, y: 0.3, z: -0.55 }
     return l
   })(),
-  jointAngles: { left_knee: 175, right_knee: 175, left_hip: 90, right_hip: 90, left_shoulder: 170, right_shoulder: 170 },
+  // 下犬式标准角度（基于解剖图分析）
+  // 双膝：175°（伸直不锁死）
+  // 髋部：65°（屈曲，臀部高抬形成倒V）
+  // 肩关节：170°（双臂向前伸展）
+  // 肘关节：175°（手臂伸直）
+  // 脊柱：中立位，从手到臀成直线
+  jointAngles: { left_knee: 175, right_knee: 175, left_hip: 65, right_hip: 65, left_shoulder: 170, right_shoulder: 170, left_elbow: 175, right_elbow: 175 },
 }
 
 const utkatasana: StandardPoseData = {
@@ -141,7 +147,12 @@ const utkatasana: StandardPoseData = {
     l[15] = { x: -0.1, y: 1.7, z: 0 }; l[16] = { x: 0.1, y: 1.7, z: 0 }
     return l
   })(),
-  jointAngles: { left_knee: 95, right_knee: 95, left_hip: 95, right_hip: 95, left_shoulder: 170, right_shoulder: 170 },
+  // 幻椅式标准角度
+  // 双膝：95°（弯曲，大腿接近平行地面）
+  // 髋部：90°（屈曲，臀部后坐如坐椅）
+  // 肩关节：170°（双臂上举）
+  // 肘关节：178°（手臂伸直）
+  jointAngles: { left_knee: 95, right_knee: 95, left_hip: 90, right_hip: 90, left_shoulder: 170, right_shoulder: 170, left_elbow: 178, right_elbow: 178 },
 }
 
 const balasana: StandardPoseData = {
@@ -271,7 +282,13 @@ const virabhadrasana_i: StandardPoseData = {
     l[14] = { x: 0.1, y: 1.5, z: 0 }; l[16] = { x: 0.08, y: 1.7, z: 0 }
     return l
   })(),
-  jointAngles: { left_knee: 90, right_knee: 175, left_hip: 95, right_hip: 160, left_shoulder: 175, right_shoulder: 175 },
+  // 战士一式标准角度（基于解剖图分析）
+  // 前膝：90°（大腿平行地面，膝盖不超过脚尖）
+  // 后腿：178°（伸直，脚跟踩地）
+  // 前髋：90°（屈曲）
+  // 后髋：175°（伸展，髋部正对前方）
+  // 肩关节：170°（双臂上举）
+  jointAngles: { left_knee: 90, right_knee: 178, left_hip: 90, right_hip: 175, left_shoulder: 170, right_shoulder: 170, left_elbow: 178, right_elbow: 178 },
 }
 
 const virabhadrasana_ii: StandardPoseData = {
@@ -286,7 +303,14 @@ const virabhadrasana_ii: StandardPoseData = {
     l[0] = { x: -0.05, y: 1.5, z: 0 }
     return l
   })(),
-  jointAngles: { left_knee: 90, right_knee: 175, left_hip: 90, right_hip: 140, left_shoulder: 90, right_shoulder: 90 },
+  // 战士二式标准角度（基于解剖图分析）
+  // 前膝：90°（大腿平行地面，膝盖对准脚尖）
+  // 后腿：178°（伸直，脚跟踩地）
+  // 前髋：90°（屈曲）
+  // 后髋：175°（伸展）
+  // 肩关节：90°（手臂侧平举，与地面平行）
+  // 肘关节：180°（手臂伸直）
+  jointAngles: { left_knee: 90, right_knee: 178, left_hip: 90, right_hip: 175, left_shoulder: 90, right_shoulder: 90, left_elbow: 178, right_elbow: 178 },
 }
 
 const trikonasana: StandardPoseData = {
@@ -305,7 +329,14 @@ const trikonasana: StandardPoseData = {
     l[14] = { x: 0.3, y: 1.4, z: 0 }; l[16] = { x: 0.3, y: 1.6, z: 0 }
     return l
   })(),
-  jointAngles: { left_knee: 175, right_knee: 175, left_hip: 120, right_hip: 120, left_shoulder: 170, right_shoulder: 30 },
+  // 三角式标准角度（基于解剖图分析）
+  // 双膝：178°（伸直不锁死）
+  // 前髋：120°（侧弯屈曲）
+  // 后髋：170°（伸展）
+  // 下方肩：170°（向下伸展触地）
+  // 上方肩：170°（向上伸展指向天花板）
+  // 肘关节：178°（双臂伸直）
+  jointAngles: { left_knee: 178, right_knee: 178, left_hip: 120, right_hip: 170, left_shoulder: 170, right_shoulder: 170, left_elbow: 178, right_elbow: 178 },
 }
 
 const utthita_parsvakonasana: StandardPoseData = {
