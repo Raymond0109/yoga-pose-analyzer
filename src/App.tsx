@@ -72,6 +72,13 @@ export function App() {
   const [smoothLevel, setSmoothLevel] = useState<number>(2)
   const [scoreResult, setScoreResult] = useState<ScoreResult | null>(null)
   const [showDebug, setShowDebug] = useState<boolean>(true)
+  // 练习模式
+  const [practiceMode, setPracticeMode] = useState<boolean>(false)
+  const [practiceDuration, setPracticeDuration] = useState<number>(30) // 秒
+  const [practiceRemaining, setPracticeRemaining] = useState<number>(0)
+  const [practiceRunning, setPracticeRunning] = useState<boolean>(false)
+  const practiceTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const practiceStartRef = useRef<number>(0)
   const [debugData, setDebugData] = useState({
     hipCenter: { x: 0, y: 0, z: 0 },
     shoulderCenter: { x: 0, y: 0, z: 0 },
@@ -156,6 +163,51 @@ export function App() {
     return () => {
       clearTimeout(timer)
       rendererRef.current?.dispose()
+    }
+  }, [])
+
+  // 练习模式计时器
+  const startPractice = useCallback(() => {
+    setPracticeRunning(true)
+    setPracticeRemaining(practiceDuration)
+    practiceStartRef.current = Date.now()
+
+    practiceTimerRef.current = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - practiceStartRef.current) / 1000)
+      const remaining = Math.max(0, practiceDuration - elapsed)
+      setPracticeRemaining(remaining)
+
+      if (remaining <= 0) {
+        if (practiceTimerRef.current) clearInterval(practiceTimerRef.current)
+        setPracticeRunning(false)
+        // 播放完成提示音
+        try {
+          const ctx = new AudioContext()
+          const osc = ctx.createOscillator()
+          osc.frequency.value = 800
+          osc.connect(ctx.destination)
+          osc.start()
+          osc.stop(ctx.currentTime + 0.3)
+        } catch {}
+      }
+    }, 100)
+  }, [practiceDuration])
+
+  const pausePractice = useCallback(() => {
+    if (practiceTimerRef.current) clearInterval(practiceTimerRef.current)
+    setPracticeRunning(false)
+  }, [])
+
+  const resetPractice = useCallback(() => {
+    if (practiceTimerRef.current) clearInterval(practiceTimerRef.current)
+    setPracticeRunning(false)
+    setPracticeRemaining(0)
+  }, [])
+
+  // 清理计时器
+  useEffect(() => {
+    return () => {
+      if (practiceTimerRef.current) clearInterval(practiceTimerRef.current)
     }
   }, [])
 
@@ -738,6 +790,53 @@ export function App() {
                 {s.label}
               </button>
             ))}
+          </div>
+
+          {/* 练习模式 */}
+          <h3 style={{...styles.sectionTitle, marginTop: 12}}>练习模式</h3>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            {!practiceRunning && practiceRemaining === 0 ? (
+              <>
+                <select
+                  style={styles.select}
+                  value={practiceDuration}
+                  onChange={(e) => setPracticeDuration(Number(e.target.value))}
+                >
+                  <option value={15}>15秒</option>
+                  <option value={30}>30秒</option>
+                  <option value={45}>45秒</option>
+                  <option value={60}>60秒</option>
+                  <option value={90}>90秒</option>
+                </select>
+                <button style={styles.button} onClick={startPractice}>
+                  开始练习
+                </button>
+              </>
+            ) : (
+              <>
+                <span style={{
+                  fontSize: 28,
+                  fontWeight: 700,
+                  color: practiceRemaining <= 5 ? '#ff4d4f' : '#52c41a',
+                  minWidth: 60,
+                  textAlign: 'center',
+                }}>
+                  {practiceRemaining}s
+                </span>
+                {practiceRunning ? (
+                  <button style={{...styles.button, backgroundColor: '#faad14'}} onClick={pausePractice}>
+                    暂停
+                  </button>
+                ) : (
+                  <button style={{...styles.button, backgroundColor: '#52c41a'}} onClick={startPractice}>
+                    继续
+                  </button>
+                )}
+                <button style={{...styles.button, backgroundColor: '#666'}} onClick={resetPractice}>
+                  重置
+                </button>
+              </>
+            )}
           </div>
 
         </div>
