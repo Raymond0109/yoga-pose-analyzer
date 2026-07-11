@@ -247,11 +247,11 @@ export function App() {
             const advices = engine.generateAdvice(compResult)
             setCorrections(advices)
 
-            // 高亮问题关节
+            // 高亮问题关节 + 矫正箭头
             const problemJoints = compResult.differences
               .filter((d) => d.severity !== 'good')
               .map((d) => d.joint)
-            rendererRef.current?.highlightProblemJoints(problemJoints)
+            rendererRef.current?.highlightProblemJoints(problemJoints, compResult.differences)
           }
 
           // 绘制 2D 关键点叠加
@@ -329,7 +329,7 @@ export function App() {
             const problemJoints = compResult.differences
               .filter((d) => d.severity !== 'good')
               .map((d) => d.joint)
-            rendererRef.current?.highlightProblemJoints(problemJoints)
+            rendererRef.current?.highlightProblemJoints(problemJoints, compResult.differences)
           }
           setStatus(`图片已分析: ${file.name}`)
         } else {
@@ -432,7 +432,7 @@ export function App() {
             const problemJoints = compResult.differences
               .filter((d) => d.severity !== 'good')
               .map((d) => d.joint)
-            rendererRef.current?.highlightProblemJoints(problemJoints)
+            rendererRef.current?.highlightProblemJoints(problemJoints, compResult.differences)
           }
 
           drawPoseOverlay(frame.imageData as any, result.landmarks)

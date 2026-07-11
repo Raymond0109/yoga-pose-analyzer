@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import type { PoseLandmark } from '@/types/pose'
+import type { PoseLandmark, PoseDifference } from '@/types/pose'
 import { ProceduralSkeleton } from './ProceduralSkeleton'
 
 // MediaPipe 33 关键点骨骼连接
@@ -170,24 +170,10 @@ export class SMPLRenderer {
     }
   }
 
-  /** 高亮问题关节 */
-  highlightProblemJoints(problemJoints: string[]): void {
-    const jointNameToIndex: Record<string, number> = {
-      left_elbow: 13, right_elbow: 14,
-      left_knee: 25, right_knee: 26,
-      left_hip: 23, right_hip: 24,
-      left_shoulder: 11, right_shoulder: 12,
-    }
-
-    for (const [name, idx] of Object.entries(jointNameToIndex)) {
-      if (idx < this.joints.length) {
-        const mat = this.joints[idx].material as THREE.MeshStandardMaterial
-        if (problemJoints.includes(name)) {
-          mat.color.setHex(PROBLEM_COLOR)
-        } else {
-          mat.color.setHex(JOINT_COLOR)
-        }
-      }
+  /** 高亮问题关节 + 矫正箭头 */
+  highlightProblemJoints(problemJoints: string[], differences?: PoseDifference[]): void {
+    if (differences && this.body) {
+      this.body.showCorrections(differences)
     }
   }
 
