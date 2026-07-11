@@ -474,13 +474,16 @@ export function App() {
         if (lm.visibility < 0.3) continue
         const x = lm.x * canvas.width
         const y = lm.y * canvas.height
+        // 外圈白色描边
         ctx.beginPath()
-        ctx.arc(x, y, 6, 0, 2 * Math.PI)
+        ctx.arc(x, y, 8, 0, 2 * Math.PI)
+        ctx.fillStyle = '#ffffff'
+        ctx.fill()
+        // 内圈绿色
+        ctx.beginPath()
+        ctx.arc(x, y, 5, 0, 2 * Math.PI)
         ctx.fillStyle = '#00ff44'
         ctx.fill()
-        ctx.strokeStyle = '#006622'
-        ctx.lineWidth = 2
-        ctx.stroke()
       }
 
       // 绘制骨骼连线
@@ -488,14 +491,25 @@ export function App() {
         [11, 12], [23, 24], [11, 23], [12, 24],
         [11, 13], [13, 15], [12, 14], [14, 16],
         [23, 25], [25, 27], [24, 26], [26, 28],
-        [0, 7], [0, 8], [7, 8], // 头部
-        [0, 1], [0, 2], [1, 3], [2, 4], // 面部
+        [0, 7], [0, 8], [7, 8],
+        [0, 1], [0, 2], [1, 3], [2, 4],
       ]
 
-      ctx.strokeStyle = '#00ccff'
-      ctx.lineWidth = 4
-      ctx.shadowColor = '#0088cc'
-      ctx.shadowBlur = 3
+      // 外层白色描边线
+      ctx.strokeStyle = '#ffffff'
+      ctx.lineWidth = 6
+      for (const [i, j] of connections) {
+        const a = landmarks[i]
+        const b = landmarks[j]
+        if (a.visibility < 0.3 || b.visibility < 0.3) continue
+        ctx.beginPath()
+        ctx.moveTo(a.x * canvas.width, a.y * canvas.height)
+        ctx.lineTo(b.x * canvas.width, b.y * canvas.height)
+        ctx.stroke()
+      }
+      // 内层青色线
+      ctx.strokeStyle = '#00eeff'
+      ctx.lineWidth = 3
       for (const [i, j] of connections) {
         const a = landmarks[i]
         const b = landmarks[j]
