@@ -6,27 +6,17 @@ import { PoseClassifier, type ClassificationResult } from '@/core/pose/PoseClass
 import { PoseComparator } from '@/core/comparison/PoseComparator'
 import { CorrectionEngine } from '@/core/comparison/CorrectionEngine'
 import { getStandardPose, STANDARD_POSES } from '@/core/comparison/StandardPoseDB'
-import { MuscleMapper } from '@/core/smpl/MuscleMapper'
-import { MusclePanel } from '@/components/MusclePanel'
 import { DebugPanel } from '@/components/DebugPanel'
 import { ScorePanel } from '@/components/ScorePanel'
 import { PoseScorer, type ScoreResult } from '@/core/scoring/PoseScorer'
 import { writeLog, downloadLog } from '@/utils/logger'
 import { useAppStore } from '@/store/appStore'
-import type { InputSourceType } from '@/types/common'
-import type { MuscleTensionData } from '@/types/smpl'
 
 // 全局单例
 let poseEstimator: MediaPipePose | null = null
 let inputManager: InputManager | null = null
 let poseClassifier: PoseClassifier | null = null
-let muscleMapper: MuscleMapper | null = null
 let poseScorer: PoseScorer | null = null
-
-function getMuscleMapper(): MuscleMapper {
-  if (!muscleMapper) muscleMapper = new MuscleMapper()
-  return muscleMapper
-}
 
 function getClassifier(): PoseClassifier {
   if (!poseClassifier) poseClassifier = new PoseClassifier()
@@ -80,8 +70,6 @@ export function App() {
   const [videoAspect, setVideoAspect] = useState<number>(16 / 9)
   // 平滑强度 0-4: 0=无, 1=轻, 2=中, 3=强, 4=极强
   const [smoothLevel, setSmoothLevel] = useState<number>(2)
-  const [showMuscles, setShowMuscles] = useState<boolean>(false)
-  const [muscleTensions, setMuscleTensions] = useState<MuscleTensionData[]>([])
   const [scoreResult, setScoreResult] = useState<ScoreResult | null>(null)
   const [showDebug, setShowDebug] = useState<boolean>(true)
   const [debugData, setDebugData] = useState({
@@ -97,11 +85,9 @@ export function App() {
   const PROCESS_INTERVAL = 33 // ~30fps
   // 用 ref 同步最新状态给帧回调（避免闭包捕获旧值）
   const autoDetectRef = useRef(autoDetect)
-  const showMusclesRef = useRef(showMuscles)
   const selectedPoseRef = useRef(selectedPose)
 
   useEffect(() => { autoDetectRef.current = autoDetect }, [autoDetect])
-  useEffect(() => { showMusclesRef.current = showMuscles }, [showMuscles])
   useEffect(() => { selectedPoseRef.current = selectedPose }, [selectedPose])
 
   // 初始化
@@ -159,11 +145,6 @@ export function App() {
         try {
           rendererRef.current = new SMPLRenderer(threeContainerRef.current)
           writeLog('3D renderer created successfully')
-
-          // 直接加载测试模型
-          writeLog('Loading test human model...')
-          rendererRef.current.loadTestModel()
-          writeLog('Test model loaded')
         } catch (error) {
           writeLog('ERROR: Failed to initialize 3D renderer: ' + String(error))
         }
@@ -177,13 +158,6 @@ export function App() {
       rendererRef.current?.dispose()
     }
   }, [])
-
-  // 肌肉显示切换
-  useEffect(() => {
-    if (rendererRef.current) {
-      rendererRef.current.setShowMuscles(showMuscles)
-    }
-  }, [showMuscles])
 
   // 平滑强度变化时更新滤波器参数
   useEffect(() => {
@@ -278,16 +252,6 @@ export function App() {
               .filter((d) => d.severity !== 'good')
               .map((d) => d.joint)
             rendererRef.current?.highlightProblemJoints(problemJoints)
-          }
-
-          // 肌肉热力图
-          if (showMusclesRef.current) {
-            const mapper = getMuscleMapper()
-            const tensions = mapper.calculateTension(angles)
-            rendererRef.current?.updateMuscleHeatmap(tensions)
-            setMuscleTensions(tensions)
-          } else {
-            setMuscleTensions([])
           }
 
           // 绘制 2D 关键点叠加
@@ -469,16 +433,6 @@ export function App() {
               .filter((d) => d.severity !== 'good')
               .map((d) => d.joint)
             rendererRef.current?.highlightProblemJoints(problemJoints)
-          }
-
-          // 肌肉热力图
-          if (showMusclesRef.current) {
-            const mapper = getMuscleMapper()
-            const tensions = mapper.calculateTension(angles)
-            rendererRef.current?.updateMuscleHeatmap(tensions)
-            setMuscleTensions(tensions)
-          } else {
-            setMuscleTensions([])
           }
 
           drawPoseOverlay(frame.imageData as any, result.landmarks)
@@ -672,12 +626,6 @@ export function App() {
           <DebugPanel visible={showDebug} data={debugData} />
           {/* 评分面板 */}
           <ScorePanel scoreResult={scoreResult} visible={true} />
-          {/* 肌肉紧张度面板 */}
-          {showMuscles && muscleTensions.length > 0 && (
-            <div style={styles.musclePanelOverlay}>
-              <MusclePanel tensions={muscleTensions} visible={true} />
-            </div>
-          )}
         </div>
       </div>
 
@@ -768,18 +716,7 @@ export function App() {
               </button>
             ))}
           </div>
-          <h3 style={{...styles.sectionTitle, marginTop: 12}}>显示选项</h3>
-          <div style={styles.toggleRow}>
-            <label style={styles.toggleLabel}>
-              <input
-                type="checkbox"
-                checked={showMuscles}
-                onChange={(e) => setShowMuscles(e.target.checked)}
-                style={styles.checkbox}
-              />
-              肌肉热力图
-            </label>
-          </div>
+
         </div>
 
         {/* 右侧：评分和矫正建议 */}
@@ -942,13 +879,6 @@ const styles: Record<string, React.CSSProperties> = {
   rightPanel: {
     flex: 1,
     position: 'relative',
-  },
-  musclePanelOverlay: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 220,
-    zIndex: 10,
   },
   threeContainer: {
     width: '100%',
