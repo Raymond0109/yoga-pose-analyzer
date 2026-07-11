@@ -19,35 +19,37 @@ const SEGS: SegDef[] = [
   { name: 'Torso',    from: -1, to: -2, rTop: 0.07, rBot: 0.09 },
   { name: 'Neck',     from: -2, to: -3, rTop: 0.05, rBot: 0.06 },
   { name: 'Chest',    from: 12, to: 11, rTop: 0.04, rBot: 0.04 },
+  // 左臂
   { name: 'LArm',     from: 11, to: 13, rTop: 0.032, rBot: 0.028 },
   { name: 'LForeArm', from: 13, to: 15, rTop: 0.028, rBot: 0.020 },
+  { name: 'LHand',    from: 15, to: 19, rTop: 0.020, rBot: 0.010 },
+  // 右臂
   { name: 'RArm',     from: 12, to: 14, rTop: 0.032, rBot: 0.028 },
   { name: 'RForeArm', from: 14, to: 16, rTop: 0.028, rBot: 0.020 },
+  { name: 'RHand',    from: 16, to: 20, rTop: 0.020, rBot: 0.010 },
+  // 左腿
   { name: 'LThigh',   from: 23, to: 25, rTop: 0.055, rBot: 0.042 },
   { name: 'LCalf',    from: 25, to: 27, rTop: 0.042, rBot: 0.030 },
+  { name: 'LFoot',    from: 27, to: 31, rTop: 0.030, rBot: 0.020 },
+  // 右腿
   { name: 'RThigh',   from: 24, to: 26, rTop: 0.055, rBot: 0.042 },
   { name: 'RCalf',    from: 26, to: 28, rTop: 0.042, rBot: 0.030 },
+  { name: 'RFoot',    from: 28, to: 32, rTop: 0.030, rBot: 0.020 },
 ]
 
 // 关节球: [位置landmark索引, 半径]
 const JOINT_DEFS: [number, number][] = [
-  [-2, 0.06],  // 肩中心（最大）
-  [11, 0.035], // 左肩
-  [12, 0.035], // 右肩
-  [13, 0.025], // 左肘
-  [14, 0.025], // 右肘
-  [15, 0.018], // 左腕
-  [16, 0.018], // 右腕
-  [23, 0.055], // 左髋
-  [24, 0.055], // 右髋
-  [25, 0.040], // 左膝
-  [26, 0.040], // 右膝
-  [27, 0.030], // 左踝
-  [28, 0.030], // 右踝
+  [-2, 0.06],  // 肩中心
+  [11, 0.035], [12, 0.035], // 肩
+  [13, 0.025], [14, 0.025], // 肘
+  [15, 0.018], [16, 0.018], // 腕
+  [23, 0.055], [24, 0.055], // 髋
+  [25, 0.040], [26, 0.040], // 膝
+  [27, 0.030], [28, 0.030], // 踝
 ]
 
-const BODY_COLOR = 0x6ba8c9
-const JOINT_COLOR = 0x5a9ab8
+const BODY_COLOR = 0xc9a88a   // 暖肤色
+const JOINT_COLOR = 0xb89878  // 关节略深
 const RADIAL_SEGS = 10
 
 function makeCapsuleGeo(rTop: number, rBot: number): THREE.BufferGeometry {
@@ -95,14 +97,14 @@ export class ProceduralSkeleton {
 
     const bodyMat = new THREE.MeshStandardMaterial({
       color: BODY_COLOR,
-      roughness: 0.35,
-      metalness: 0.08,
+      roughness: 0.55,
+      metalness: 0.02,
     })
 
     const jointMat = new THREE.MeshStandardMaterial({
       color: JOINT_COLOR,
-      roughness: 0.3,
-      metalness: 0.1,
+      roughness: 0.45,
+      metalness: 0.05,
     })
 
     // 身体段

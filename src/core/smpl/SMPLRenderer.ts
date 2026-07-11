@@ -49,11 +49,14 @@ export class SMPLRenderer {
     this.controls.target.set(0, 1.0, 0)
     this.controls.enableDamping = true
 
-    // 光照
-    this.scene.add(new THREE.AmbientLight(0xffffff, 0.6))
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8)
-    dirLight.position.set(2, 5, 3)
-    this.scene.add(dirLight)
+    // 光照（自然三点光）
+    this.scene.add(new THREE.AmbientLight(0xfff5ee, 0.5)) // 暖环境光
+    const keyLight = new THREE.DirectionalLight(0xffffff, 0.9)
+    keyLight.position.set(3, 5, 4)
+    this.scene.add(keyLight)
+    const fillLight = new THREE.DirectionalLight(0x8888cc, 0.3)
+    fillLight.position.set(-3, 3, -2)
+    this.scene.add(fillLight)
 
     const gridHelper = new THREE.GridHelper(4, 20, 0x333333, 0x222222)
     this.scene.add(gridHelper)
