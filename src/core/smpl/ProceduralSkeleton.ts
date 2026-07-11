@@ -204,19 +204,12 @@ export class ProceduralSkeleton {
     if (!nose) { this.headSphere.visible = false; return }
     this.headSphere.visible = true
 
-    // 头部中心：鼻子稍微往后偏移
-    const earMid = (jp[7] && jp[8])
-      ? new THREE.Vector3().addVectors(jp[7], jp[8]).multiplyScalar(0.5)
-      : undefined
-
-    if (earMid) {
-      this.headSphere.position.lerpVectors(nose, earMid, 0.3)
-      this.headSphere.position.y += 0.05
-    } else if (neck) {
+    if (neck) {
+      // 头部中心：沿颈部方向从脖子延伸出去
       const headDir = new THREE.Vector3().subVectors(nose, neck).normalize()
-      this.headSphere.position.copy(nose).addScaledVector(headDir, 0.06)
+      this.headSphere.position.copy(neck).addScaledVector(headDir, 0.12)
     } else {
-      this.headSphere.position.copy(nose).add(new THREE.Vector3(0, 0.06, 0))
+      this.headSphere.position.copy(nose).add(new THREE.Vector3(0, 0.08, 0))
     }
   }
 

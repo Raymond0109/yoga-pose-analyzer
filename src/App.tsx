@@ -475,11 +475,11 @@ export function App() {
         const x = lm.x * canvas.width
         const y = lm.y * canvas.height
         ctx.beginPath()
-        ctx.arc(x, y, 5, 0, 2 * Math.PI)
-        ctx.fillStyle = '#52c41a'
+        ctx.arc(x, y, 6, 0, 2 * Math.PI)
+        ctx.fillStyle = '#00ff44'
         ctx.fill()
-        ctx.strokeStyle = '#2a7a0a'
-        ctx.lineWidth = 1
+        ctx.strokeStyle = '#006622'
+        ctx.lineWidth = 2
         ctx.stroke()
       }
 
@@ -488,11 +488,14 @@ export function App() {
         [11, 12], [23, 24], [11, 23], [12, 24],
         [11, 13], [13, 15], [12, 14], [14, 16],
         [23, 25], [25, 27], [24, 26], [26, 28],
-        [0, 11], [0, 12], // 鼻子到肩膀（颈部参考）
+        [0, 7], [0, 8], [7, 8], // 头部
+        [0, 1], [0, 2], [1, 3], [2, 4], // 面部
       ]
 
-      ctx.strokeStyle = '#4a90d9'
-      ctx.lineWidth = 3
+      ctx.strokeStyle = '#00ccff'
+      ctx.lineWidth = 4
+      ctx.shadowColor = '#0088cc'
+      ctx.shadowBlur = 3
       for (const [i, j] of connections) {
         const a = landmarks[i]
         const b = landmarks[j]
@@ -502,6 +505,8 @@ export function App() {
         ctx.lineTo(b.x * canvas.width, b.y * canvas.height)
         ctx.stroke()
       }
+      ctx.shadowBlur = 0
+      ctx.shadowColor = 'transparent'
     },
     []
   )
