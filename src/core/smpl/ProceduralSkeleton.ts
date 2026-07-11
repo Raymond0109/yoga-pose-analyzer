@@ -49,16 +49,16 @@ const JOINT_NAME_MAP: Record<string, number> = {
   left_shoulder: 11, right_shoulder: 12,
 }
 
-// 矫正方向（关节名 → 世界空间方向偏移）
-const CORRECTION_DIR: Record<string, [number, number, number]> = {
-  left_elbow: [0, 0, 1],
-  right_elbow: [0, 0, -1],
-  left_knee: [0, 0, 1],
-  right_knee: [0, 0, -1],
-  left_hip: [0, 1, 0],
-  right_hip: [0, 1, 0],
-  left_shoulder: [0, 0, 1],
-  right_shoulder: [0, 0, -1],
+// 关节名 → [父landmark, 子landmark]（用于计算肢体方向）
+const JOINT_LIMB_MAP: Record<string, [number, number]> = {
+  left_elbow: [11, 15],     // 肩→腕（整条手臂方向）
+  right_elbow: [12, 16],
+  left_knee: [23, 27],      // 髋→踝（整条腿方向）
+  right_knee: [24, 28],
+  left_hip: [11, 25],       // 肩→膝（躯干到大腿方向）
+  right_hip: [12, 26],
+  left_shoulder: [0, 13],   // 头→肘（肩的朝向）
+  right_shoulder: [0, 14],
 }
 
 const BODY_COLOR = 0xc9a88a
@@ -192,14 +192,13 @@ export class ProceduralSkeleton {
 
     const positions = jp || this.computePositions(this.lastLandmarks)
 
-    // 高亮问题关节
     for (const diff of differences) {
       if (diff.severity === 'good') continue
 
       const idx = JOINT_NAME_MAP[diff.joint]
       if (idx === undefined) continue
 
-      // 高亮关节球颜色
+      // 高亮关节球
       const jm = this.jointMeshes.find(j => j.idx === idx)
       if (jm) {
         ;(jm.mesh.material as THREE.MeshStandardMaterial).color.setHex(
@@ -207,38 +206,56 @@ export class ProceduralSkeleton {
         )
       }
 
-      // 创建矫正箭头
+      // 计算矫正方向
       const pos = positions[idx]
       if (!pos) continue
 
-      const dirDef = CORRECTION_DIR[diff.joint]
-      if (!dirDef) continue
+      const limbDef = JOINT_LIMB_MAP[diff.joint]
+      if (!limbDef) continue
 
-      // 箭头方向：根据偏差大小缩放
+      const [parentIdx, childIdx] = limbDef
+      const parentPos = positions[parentIdx]
+      const childPos = positions[childIdx]
+      if (!parentPos || !childPos) continue
+
+      // 肢体方向（从关节到子节点）
+      const limbDir = new THREE.Vector3().subVectors(childPos, pos).normalize()
+
+      // 垂直方向：肢体方向 × 世界Y轴 = 水平垂直方向
+      const up = new THREE.Vector3(0, 1, 0)
+      const perpDir = new THREE.Vector3().crossVectors(limbDir, up).normalize()
+
+      // 如果垂直方向太小（肢体接近垂直），用另一个垂直方向
+      if (perpDir.lengthSq() < 0.01) {
+        perpDir.crossVectors(limbDir, new THREE.Vector3(1, 0, 0)).normalize()
+      }
+
+      // delta > 0 表示当前角度 > 目标角度（需要弯曲更多）
+      // delta < 0 表示当前角度 < 目标角度（需要伸直）
+      // 箭头方向：垂直于肢体，指向修正方向
+      const sign = diff.delta > 0 ? 1 : -1
+      const arrowDir = perpDir.multiplyScalar(sign)
+
+      // 箭头长度与偏差成正比
       const arrowLen = Math.min(Math.abs(diff.delta) / 60, 0.3)
-      const arrowDir = new THREE.Vector3(...dirDef).normalize()
 
-      // 箭头组
+      // 创建箭头
       const arrowGroup = new THREE.Group()
       arrowGroup.position.copy(pos)
+
+      const color = SEVERITY_COLORS[diff.severity]
 
       // 箭头杆
       const shaftGeo = new THREE.CylinderGeometry(0.008, 0.008, arrowLen, 6)
       shaftGeo.translate(0, arrowLen / 2, 0)
-      const shaftMat = new THREE.MeshBasicMaterial({
-        color: SEVERITY_COLORS[diff.severity],
-      })
-      const shaft = new THREE.Mesh(shaftGeo, shaftMat)
+      const shaft = new THREE.Mesh(shaftGeo, new THREE.MeshBasicMaterial({ color }))
       shaft.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), arrowDir)
       arrowGroup.add(shaft)
 
       // 箭头尖
       const headGeo = new THREE.ConeGeometry(0.02, 0.04, 8)
       headGeo.translate(0, arrowLen + 0.02, 0)
-      const headMat = new THREE.MeshBasicMaterial({
-        color: SEVERITY_COLORS[diff.severity],
-      })
-      const head = new THREE.Mesh(headGeo, headMat)
+      const head = new THREE.Mesh(headGeo, new THREE.MeshBasicMaterial({ color }))
       head.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), arrowDir)
       arrowGroup.add(head)
 
@@ -257,8 +274,7 @@ export class ProceduralSkeleton {
       ctx.fillText(`${diff.delta > 0 ? '+' : ''}${diff.delta.toFixed(0)}°`, 64, 32)
 
       const texture = new THREE.CanvasTexture(canvas)
-      const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true })
-      const sprite = new THREE.Sprite(spriteMat)
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true }))
       sprite.position.copy(pos).addScaledVector(arrowDir, arrowLen + 0.08)
       sprite.scale.set(0.12, 0.05, 1)
       this.group.add(sprite)
