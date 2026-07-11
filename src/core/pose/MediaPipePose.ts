@@ -6,6 +6,7 @@
 import { PoseLandmarker, FilesetResolver, type PoseLandmarkerResult } from '@mediapipe/tasks-vision'
 import type { PoseResult, PoseLandmark } from '@/types/pose'
 import { LandmarkSmoother, type SmootherState } from './LandmarkSmoother'
+import { AdvancedPreprocessor } from './AdvancedPreprocessor'
 
 /** 平滑等级预设 */
 const SMOOTH_PRESETS: Record<number, { minCutoff: number; beta: number }> = {
@@ -85,7 +86,7 @@ export class MediaPipePose {
   }
 
   /**
-   * 预处理图片（增强对比度）
+   * 预处理图片（解剖图→真人风格转换）
    */
   private preprocessImage(image: HTMLImageElement): HTMLImageElement {
     if (!this.config.enablePreprocessing) return image
@@ -96,21 +97,17 @@ export class MediaPipePose {
     const ctx = canvas.getContext('2d')!
     ctx.drawImage(image, 0, 0)
 
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-    const data = imageData.data
+    let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
 
-    // 简单对比度增强
-    let min = 255, max = 0
-    for (let i = 0; i < data.length; i += 4) {
-      const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114
-      if (gray < min) min = gray
-      if (gray > max) max = gray
-    }
-    const range = max - min || 1
-    for (let i = 0; i < data.length; i += 4) {
-      data[i] = ((data[i] - min) / range) * 255
-      data[i + 1] = ((data[i + 1] - min) / range) * 255
-      data[i + 2] = ((data[i + 2] - min) / range) * 255
+    // 检测是否为解剖图（红色/橙色主导）
+    const isAnatomy = this.detectAnatomyImage(imageData)
+
+    if (isAnatomy) {
+      // 解剖图：转换为类真人风格
+      imageData = AdvancedPreprocessor.anatomyToRealistic(imageData)
+    } else {
+      // 普通图片：增强肤色
+      imageData = AdvancedPreprocessor.enhanceSkinTones(imageData)
     }
 
     ctx.putImageData(imageData, 0, 0)
@@ -118,6 +115,26 @@ export class MediaPipePose {
     const enhanced = new Image()
     enhanced.src = canvas.toDataURL()
     return enhanced
+  }
+
+  /**
+   * 检测是否为解剖图
+   */
+  private detectAnatomyImage(imageData: ImageData): boolean {
+    const { data, width, height } = imageData
+    let redCount = 0, totalPixels = 0
+
+    // 采样检查
+    for (let i = 0; i < data.length; i += 16) { // 每4像素采样一次
+      const r = data[i], g = data[i + 1], b = data[i + 2]
+      totalPixels++
+      // 红色/橙色/棕色系（解剖图的肌肉颜色）
+      if (r > 120 && g > 40 && b < 150 && r > g * 1.2) {
+        redCount++
+      }
+    }
+
+    return redCount / totalPixels > 0.15 // 超过15%的红色区域
   }
 
   estimate(
