@@ -10,21 +10,22 @@ export class PoseComparator {
       const current = currentAngles.find((a) => a.joint === target.joint)
       if (!current) continue
 
-      const delta = Math.abs(current.angle - target.angle)
-      const severity = this.getSeverity(delta, standardPose.tolerance)
-      const suggestion = this.getSuggestion(target.joint, delta, current.angle, target.angle)
+      const delta = current.angle - target.angle  // 有符号：正=需减小，负=需增大
+      const absDelta = Math.abs(delta)
+      const severity = this.getSeverity(absDelta, standardPose.tolerance)
+      const suggestion = this.getSuggestion(target.joint, absDelta, current.angle, target.angle)
 
       differences.push({
         joint: target.joint,
         current: current.angle,
         target: target.angle,
-        delta,
+        delta,  // 保留符号用于箭头方向
         severity,
         suggestion,
       })
 
-      // 评分：delta 越小分越高
-      totalScore += Math.max(0, 100 - delta * 2)
+      // 评分：absDelta 越小分越高
+      totalScore += Math.max(0, 100 - absDelta * 2)
     }
 
     const overallScore =

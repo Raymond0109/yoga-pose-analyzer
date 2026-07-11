@@ -75,9 +75,19 @@ const BASE: Array<{ x: number; y: number; z: number }> = [
 
 const tadasana: StandardPoseData = {
   id: 'tadasana', nameCN: '山式', nameEN: 'Mountain Pose', nameSanskrit: 'Tadasana',
-  difficulty: 'beginner', category: '站立', muscles: ['核心', '腿部'],
+  difficulty: 'beginner', category: '站立', muscles: ['核心', '腿部', '脊柱'],
   landmarks: cloneLandmarks(BASE),
-  jointAngles: { left_knee: 175, right_knee: 175, left_hip: 175, right_hip: 175, left_shoulder: 170, right_shoulder: 170 },
+  // 山式标准角度（瑜伽解剖学）
+  // 膝关节：伸直但不锁死 175-180°
+  // 髋关节：中立位 175-180°（骨盆水平，不前倾后倾）
+  // 肩关节：自然下垂微后收 170-175°
+  // 肘关节：自然伸直 175-180°
+  jointAngles: {
+    left_knee: 178, right_knee: 178,
+    left_hip: 178, right_hip: 178,
+    left_shoulder: 175, right_shoulder: 175,
+    left_elbow: 178, right_elbow: 178,
+  },
 }
 
 const vrksasana: StandardPoseData = {
@@ -746,7 +756,8 @@ export const STANDARD_POSES: StandardPose[] = STANDARD_POSE_DATABASE.map(p => ({
   id: p.id, nameCN: p.nameCN, nameEN: p.nameEN, nameSanskrit: p.nameSanskrit,
   difficulty: p.difficulty, category: p.category, description: '', benefits: [],
   targetAngles: Object.entries(p.jointAngles).map(([joint, angle]) => ({
-    joint, angle, axis: 'flexion' as const,
+    joint, angle,
+    axis: (joint.includes('shoulder') ? 'abduction' : 'flexion') as 'flexion' | 'abduction',
   })),
   tolerance: 20, keyPoints: [], commonMistakes: [],
 }))
