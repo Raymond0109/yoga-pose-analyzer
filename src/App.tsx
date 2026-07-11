@@ -475,9 +475,12 @@ export function App() {
         const x = lm.x * canvas.width
         const y = lm.y * canvas.height
         ctx.beginPath()
-        ctx.arc(x, y, 4, 0, 2 * Math.PI)
+        ctx.arc(x, y, 5, 0, 2 * Math.PI)
         ctx.fillStyle = '#52c41a'
         ctx.fill()
+        ctx.strokeStyle = '#2a7a0a'
+        ctx.lineWidth = 1
+        ctx.stroke()
       }
 
       // 绘制骨骼连线
@@ -485,10 +488,11 @@ export function App() {
         [11, 12], [23, 24], [11, 23], [12, 24],
         [11, 13], [13, 15], [12, 14], [14, 16],
         [23, 25], [25, 27], [24, 26], [26, 28],
+        [0, 11], [0, 12], // 鼻子到肩膀（颈部参考）
       ]
 
       ctx.strokeStyle = '#4a90d9'
-      ctx.lineWidth = 2
+      ctx.lineWidth = 3
       for (const [i, j] of connections) {
         const a = landmarks[i]
         const b = landmarks[j]

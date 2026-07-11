@@ -17,8 +17,8 @@ interface SegDef {
 
 const SEGS: SegDef[] = [
   { name: 'Torso',    from: -1, to: -2, rTop: 0.07, rBot: 0.09 },
-  { name: 'Neck',     from: -2, to: -3, rTop: 0.05, rBot: 0.06 },
-  { name: 'Chest',    from: 12, to: 11, rTop: 0.04, rBot: 0.04 },
+  { name: 'Neck',     from: -2, to: -3, rTop: 0.030, rBot: 0.040 },
+  { name: 'Chest',    from: 12, to: 11, rTop: 0.035, rBot: 0.035 },
   // 左臂
   { name: 'LArm',     from: 11, to: 13, rTop: 0.032, rBot: 0.028 },
   { name: 'LForeArm', from: 13, to: 15, rTop: 0.028, rBot: 0.020 },
@@ -39,7 +39,7 @@ const SEGS: SegDef[] = [
 
 // 关节球: [位置landmark索引, 半径]
 const JOINT_DEFS: [number, number][] = [
-  [-2, 0.06],  // 肩中心
+  [-2, 0.045], // 肩中心
   [11, 0.035], [12, 0.035], // 肩
   [13, 0.025], [14, 0.025], // 肘
   [15, 0.018], [16, 0.018], // 腕
@@ -191,8 +191,8 @@ export class ProceduralSkeleton {
       jp[-2] = new THREE.Vector3().addVectors(jp[11], jp[12]).multiplyScalar(0.5) // 肩中心
     }
     if (jp[-2] && jp[0]) {
-      // 颈部：肩中心到鼻子的60%处
-      jp[-3] = new THREE.Vector3().lerpVectors(jp[-2], jp[0], 0.6)
+      // 颈部：肩中心到鼻子的45%处（更短更自然）
+      jp[-3] = new THREE.Vector3().lerpVectors(jp[-2], jp[0], 0.45)
     }
 
     return jp
