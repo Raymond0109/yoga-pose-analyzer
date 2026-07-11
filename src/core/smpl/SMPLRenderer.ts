@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import type { PoseLandmark } from '@/types/pose'
+import { ProceduralSkeleton } from './ProceduralSkeleton'
 
 // MediaPipe 33 关键点骨骼连接
 const SKELETON_CONNECTIONS: [number, number][] = [
@@ -24,6 +25,7 @@ export class SMPLRenderer {
   private joints: THREE.Mesh[] = []
   private bones: THREE.Mesh[] = []
   private container: HTMLElement
+  private body: ProceduralSkeleton | null = null
 
   constructor(container: HTMLElement) {
     this.container = container
@@ -57,6 +59,12 @@ export class SMPLRenderer {
     this.scene.add(gridHelper)
 
     this.initSkeleton()
+    this.body = new ProceduralSkeleton(this.scene)
+
+    // 隐藏原始骨架点线（身体模型已包含关节球）
+    this.joints.forEach(j => j.visible = false)
+    this.bones.forEach(b => b.visible = false)
+
     this.animate()
   }
 
@@ -110,6 +118,9 @@ export class SMPLRenderer {
       this.joints[i].position.set(x, y, z)
       this.joints[i].visible = (lm.visibility ?? 0.5) > 0.2
     }
+
+    // 更新程序化骨骼人体
+    this.body?.update(landmarks)
 
     // 更新骨骼连接
     for (let i = 0; i < SKELETON_CONNECTIONS.length; i++) {
@@ -197,6 +208,7 @@ export class SMPLRenderer {
   }
 
   dispose(): void {
+    this.body?.dispose()
     this.renderer.dispose()
     this.controls.dispose()
     if (this.container.contains(this.renderer.domElement)) {
