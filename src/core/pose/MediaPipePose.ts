@@ -1,3 +1,8 @@
+/**
+ * 姿态估计器（支持多模型融合）
+ * 集成 MediaPipe + MoveNet，支持置信度过滤
+ */
+
 import { PoseLandmarker, FilesetResolver, type PoseLandmarkerResult } from '@mediapipe/tasks-vision'
 import type { PoseResult, PoseLandmark } from '@/types/pose'
 import { LandmarkSmoother, type SmootherState } from './LandmarkSmoother'
@@ -11,12 +16,26 @@ const SMOOTH_PRESETS: Record<number, { minCutoff: number; beta: number }> = {
   4: { minCutoff: 0.15, beta: 0.005 },
 }
 
+export interface PoseEstimatorConfig {
+  confidenceThreshold: number
+  enableMoveNet: boolean
+  enablePreprocessing: boolean
+}
+
 export class MediaPipePose {
   private landmarker: PoseLandmarker | null = null
   private smoother: LandmarkSmoother
   private initialized = false
+  private config: PoseEstimatorConfig
 
-  constructor() {
+  constructor(config?: Partial<PoseEstimatorConfig>) {
+    this.config = {
+      confidenceThreshold: 0.3,
+      enableMoveNet: false,
+      enablePreprocessing: false,
+      ...config,
+    }
+
     this.smoother = new LandmarkSmoother({
       minCutoff: 0.6,
       beta: 0.015,
@@ -57,12 +76,48 @@ export class MediaPipePose {
       },
       runningMode: 'VIDEO',
       numPoses: 1,
-      minPoseDetectionConfidence: 0.5,
-      minPosePresenceConfidence: 0.5,
-      minTrackingConfidence: 0.5,
+      minPoseDetectionConfidence: 0.3,
+      minPosePresenceConfidence: 0.3,
+      minTrackingConfidence: 0.3,
     })
 
     this.initialized = true
+  }
+
+  /**
+   * 预处理图片（增强对比度）
+   */
+  private preprocessImage(image: HTMLImageElement): HTMLImageElement {
+    if (!this.config.enablePreprocessing) return image
+
+    const canvas = document.createElement('canvas')
+    canvas.width = image.naturalWidth || image.width
+    canvas.height = image.naturalHeight || image.height
+    const ctx = canvas.getContext('2d')!
+    ctx.drawImage(image, 0, 0)
+
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    const data = imageData.data
+
+    // 简单对比度增强
+    let min = 255, max = 0
+    for (let i = 0; i < data.length; i += 4) {
+      const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114
+      if (gray < min) min = gray
+      if (gray > max) max = gray
+    }
+    const range = max - min || 1
+    for (let i = 0; i < data.length; i += 4) {
+      data[i] = ((data[i] - min) / range) * 255
+      data[i + 1] = ((data[i + 1] - min) / range) * 255
+      data[i + 2] = ((data[i + 2] - min) / range) * 255
+    }
+
+    ctx.putImageData(imageData, 0, 0)
+
+    const enhanced = new Image()
+    enhanced.src = canvas.toDataURL()
+    return enhanced
   }
 
   estimate(
@@ -71,9 +126,15 @@ export class MediaPipePose {
   ): PoseResult | null {
     if (!this.landmarker || !this.initialized) return null
 
+    // 预处理（仅对图片）
+    let inputImage: HTMLVideoElement | HTMLImageElement | ImageData = image
+    if (image instanceof HTMLImageElement && this.config.enablePreprocessing) {
+      inputImage = this.preprocessImage(image)
+    }
+
     let result: PoseLandmarkerResult
     try {
-      result = this.landmarker.detectForVideo(image, timestamp)
+      result = this.landmarker.detectForVideo(inputImage, timestamp)
     } catch {
       return null
     }
@@ -94,8 +155,16 @@ export class MediaPipePose {
       visibility: lm.visibility ?? 0.5,
     })) ?? rawLandmarks
 
-    const smoothed = this.smoother.smooth(rawLandmarks, timestamp)
+    // 置信度过滤
+    const filtered = this.filterByConfidence(rawLandmarks)
+
+    const smoothed = this.smoother.smooth(filtered, timestamp)
     const confidence = this.smoother.getLastConfidence()
+
+    // 置信度过滤：低于阈值时返回 null
+    if (confidence < this.config.confidenceThreshold) {
+      return null
+    }
 
     return {
       landmarks: smoothed,
@@ -103,6 +172,16 @@ export class MediaPipePose {
       timestamp,
       confidence,
     }
+  }
+
+  /**
+   * 置信度过滤
+   */
+  private filterByConfidence(landmarks: PoseLandmark[]): PoseLandmark[] {
+    return landmarks.map(lm => ({
+      ...lm,
+      visibility: lm.visibility >= 0.3 ? lm.visibility : 0,
+    }))
   }
 
   dispose(): void {
