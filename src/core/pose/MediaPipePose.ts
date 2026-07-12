@@ -31,7 +31,7 @@ export class MediaPipePose {
 
   constructor(config?: Partial<PoseEstimatorConfig>) {
     this.config = {
-      confidenceThreshold: 0.3,
+      confidenceThreshold: 0.2,
       enableMoveNet: false,
       enablePreprocessing: false,
       ...config,
@@ -77,16 +77,16 @@ export class MediaPipePose {
       },
       runningMode: 'VIDEO',
       numPoses: 1,
-      minPoseDetectionConfidence: 0.3,
-      minPosePresenceConfidence: 0.3,
-      minTrackingConfidence: 0.3,
+      minPoseDetectionConfidence: 0.2,
+      minPosePresenceConfidence: 0.2,
+      minTrackingConfidence: 0.2,
     })
 
     this.initialized = true
   }
 
   /**
-   * 预处理图片（解剖图→真人风格转换）
+   * 预处理图片（仅对解剖图转换，真实照片不处理）
    */
   private preprocessImage(image: HTMLImageElement): HTMLImageElement {
     if (!this.config.enablePreprocessing) return image
@@ -97,20 +97,16 @@ export class MediaPipePose {
     const ctx = canvas.getContext('2d')!
     ctx.drawImage(image, 0, 0)
 
-    let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
 
-    // 检测是否为解剖图（红色/橙色主导）
-    const isAnatomy = this.detectAnatomyImage(imageData)
-
-    if (isAnatomy) {
-      // 解剖图：转换为类真人风格
-      imageData = AdvancedPreprocessor.anatomyToRealistic(imageData)
-    } else {
-      // 普通图片：增强肤色
-      imageData = AdvancedPreprocessor.enhanceSkinTones(imageData)
+    // 仅对解剖图做转换，真实照片直接返回
+    if (!this.detectAnatomyImage(imageData)) {
+      return image  // 真实照片不预处理
     }
 
-    ctx.putImageData(imageData, 0, 0)
+    // 解剖图：转换为类真人风格
+    const processed = AdvancedPreprocessor.anatomyToRealistic(imageData)
+    ctx.putImageData(processed, 0, 0)
 
     const enhanced = new Image()
     enhanced.src = canvas.toDataURL()
