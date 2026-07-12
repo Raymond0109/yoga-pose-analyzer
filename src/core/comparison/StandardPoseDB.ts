@@ -246,7 +246,13 @@ const baddha_konasana: StandardPoseData = {
     l[14] = { x: 0.2, y: 0.55, z: 0.12 }; l[16] = { x: 0.15, y: 0.45, z: 0.18 }
     return l
   })(),
-  jointAngles: { left_knee: 110, right_knee: 110, left_hip: 80, right_hip: 80, left_shoulder: 150, right_shoulder: 150 },
+  // 蝴蝶式/束角式标准角度（基于视频分析）
+  // 双膝：110°（屈膝，脚掌相对）
+  // 髋部：80°（外旋打开）
+  // 肩关节：150°（手臂前伸抓脚）
+  // 肘关节：160°（手臂微屈）
+  // 要点：腹部贴靠大腿，注意配合呼吸
+  jointAngles: { left_knee: 110, right_knee: 110, left_hip: 80, right_hip: 80, left_shoulder: 150, right_shoulder: 150, left_elbow: 160, right_elbow: 160 },
 }
 
 const savasana: StandardPoseData = {
@@ -718,6 +724,101 @@ const prasarita_padottanasana: StandardPoseData = {
 }
 
 // ============================================================
+// 新增体式（基于视频分析）
+// ============================================================
+
+const vajrasana: StandardPoseData = {
+  id: 'vajrasana', nameCN: '金刚跪立', nameEN: 'Thunderbolt Pose', nameSanskrit: 'Vajrasana',
+  difficulty: 'beginner', category: '坐姿', muscles: ['大腿前侧', '脚踝'],
+  landmarks: (() => {
+    const l = cloneLandmarks(BASE)
+    l[0] = { x: 0, y: 1.2, z: 0.05 }
+    l[11] = { x: -0.15, y: 1.0, z: 0 }; l[12] = { x: 0.15, y: 1.0, z: 0 }
+    l[23] = { x: -0.08, y: 0.6, z: -0.05 }; l[24] = { x: 0.08, y: 0.6, z: -0.05 }
+    l[25] = { x: -0.08, y: 0.35, z: -0.15 }; l[26] = { x: 0.08, y: 0.35, z: -0.15 }
+    l[27] = { x: -0.08, y: 0.35, z: 0.1 }; l[28] = { x: 0.08, y: 0.35, z: 0.1 }
+    l[13] = { x: -0.15, y: 0.7, z: 0.05 }; l[15] = { x: -0.1, y: 0.6, z: 0.08 }
+    l[14] = { x: 0.15, y: 0.7, z: 0.05 }; l[16] = { x: 0.1, y: 0.6, z: 0.08 }
+    return l
+  })(),
+  // 金刚跪立标准角度
+  // 双膝：30°（跪坐，脚跟贴臀）
+  // 髋部：170°（中立位）
+  // 肩关节：170°（手臂自然下垂）
+  // 肘关节：160°（手臂微屈放膝上）
+  jointAngles: { left_knee: 30, right_knee: 30, left_hip: 170, right_hip: 170, left_shoulder: 170, right_shoulder: 170, left_elbow: 160, right_elbow: 160 },
+}
+
+const paschimottanasana: StandardPoseData = {
+  id: 'paschimottanasana', nameCN: '坐立前屈', nameEN: 'Seated Forward Bend', nameSanskrit: 'Paschimottanasana',
+  difficulty: 'beginner', category: '坐姿', muscles: ['背部', '大腿后侧'],
+  landmarks: (() => {
+    const l = cloneLandmarks(BASE)
+    l[0] = { x: 0, y: 0.55, z: 0.25 }
+    l[11] = { x: -0.15, y: 0.6, z: 0.1 }; l[12] = { x: 0.15, y: 0.6, z: 0.1 }
+    l[23] = { x: -0.1, y: 0.45, z: 0 }; l[24] = { x: 0.1, y: 0.45, z: 0 }
+    l[25] = { x: -0.1, y: 0.45, z: 0.3 }; l[26] = { x: 0.1, y: 0.45, z: 0.3 }
+    l[27] = { x: -0.1, y: 0.45, z: 0.6 }; l[28] = { x: 0.1, y: 0.45, z: 0.6 }
+    l[13] = { x: -0.1, y: 0.5, z: 0.2 }; l[15] = { x: -0.1, y: 0.45, z: 0.55 }
+    l[14] = { x: 0.1, y: 0.5, z: 0.2 }; l[16] = { x: 0.1, y: 0.45, z: 0.55 }
+    return l
+  })(),
+  // 坐立前屈标准角度
+  // 双膝：175°（双腿伸直）
+  // 髋部：45°（深度前屈）
+  // 肩关节：160°（手臂前伸抓脚）
+  // 肘关节：170°（手臂伸直）
+  // 要点：腹部贴靠大腿，注意配合呼吸
+  jointAngles: { left_knee: 175, right_knee: 175, left_hip: 45, right_hip: 45, left_shoulder: 160, right_shoulder: 160, left_elbow: 170, right_elbow: 170 },
+}
+
+const salamba_bhujangasana: StandardPoseData = {
+  id: 'salamba_bhujangasana', nameCN: '人面狮身式', nameEN: 'Sphinx Pose', nameSanskrit: 'Salamba Bhujangasana',
+  difficulty: 'beginner', category: '俯卧', muscles: ['背部', '脊柱'],
+  landmarks: (() => {
+    const l = cloneLandmarks(BASE)
+    l[0] = { x: 0, y: 0.55, z: 0.15 }
+    l[11] = { x: -0.15, y: 0.45, z: 0.05 }; l[12] = { x: 0.15, y: 0.45, z: 0.05 }
+    l[23] = { x: -0.1, y: 0.2, z: -0.1 }; l[24] = { x: 0.1, y: 0.2, z: -0.1 }
+    l[25] = { x: -0.1, y: 0.15, z: -0.3 }; l[26] = { x: 0.1, y: 0.15, z: -0.3 }
+    l[27] = { x: -0.1, y: 0.12, z: -0.5 }; l[28] = { x: 0.1, y: 0.12, z: -0.5 }
+    l[13] = { x: -0.15, y: 0.3, z: 0.1 }; l[15] = { x: -0.15, y: 0.2, z: 0.15 }
+    l[14] = { x: 0.15, y: 0.3, z: 0.1 }; l[16] = { x: 0.15, y: 0.2, z: 0.15 }
+    return l
+  })(),
+  // 人面狮身式/斯芬克斯式标准角度
+  // 双膝：175°（双腿伸直贴地）
+  // 髋部：170°（俯卧）
+  // 肩关节：100°（前臂撑地）
+  // 肘关节：90°（前臂与上臂垂直）
+  // 要点：胸腔打开，双手扶地抬头向上
+  jointAngles: { left_knee: 175, right_knee: 175, left_hip: 170, right_hip: 170, left_shoulder: 100, right_shoulder: 100, left_elbow: 90, right_elbow: 90 },
+}
+
+const supta_matsyendrasana: StandardPoseData = {
+  id: 'supta_matsyendrasana', nameCN: '仰卧扭转', nameEN: 'Supine Twist', nameSanskrit: 'Supta Matsyendrasana',
+  difficulty: 'beginner', category: '仰卧', muscles: ['脊柱', '臀部'],
+  landmarks: (() => {
+    const l = cloneLandmarks(BASE)
+    l[0] = { x: 0, y: 0.15, z: 0.08 }
+    l[11] = { x: -0.25, y: 0.15, z: 0 }; l[12] = { x: 0.25, y: 0.15, z: 0 }
+    l[23] = { x: -0.1, y: 0.15, z: 0 }; l[24] = { x: 0.1, y: 0.15, z: 0 }
+    l[25] = { x: -0.15, y: 0.25, z: 0.1 }; l[26] = { x: 0.15, y: 0.25, z: 0.1 }
+    l[27] = { x: -0.2, y: 0.35, z: 0.15 }; l[28] = { x: 0.2, y: 0.35, z: 0.15 }
+    l[13] = { x: -0.3, y: 0.15, z: 0 }; l[15] = { x: -0.4, y: 0.12, z: 0 }
+    l[14] = { x: 0.3, y: 0.15, z: 0 }; l[16] = { x: 0.4, y: 0.12, z: 0 }
+    return l
+  })(),
+  // 仰卧扭转标准角度
+  // 双膝：90°（屈膝并拢）
+  // 髋部：90°（屈髋）
+  // 肩关节：170°（双臂侧平举贴地）
+  // 肘关节：175°（手臂伸直）
+  // 要点：双腿屈膝左右摆动，注意配合呼吸
+  jointAngles: { left_knee: 90, right_knee: 90, left_hip: 90, right_hip: 90, left_shoulder: 170, right_shoulder: 170, left_elbow: 175, right_elbow: 175 },
+}
+
+// ============================================================
 // 导出
 // ============================================================
 
@@ -726,6 +827,7 @@ export const STANDARD_POSE_DATABASE: StandardPoseData[] = [
   tadasana, vrksasana, adho_mukha_svanasana, utkatasana,
   balasana, bhujangasana, setu_bandhasana, ustrasana, baddha_konasana, savasana,
   bharadvajasana_i, padangusthasana, chakravakasana, sukhasana, utthita_ashwa_sanchalanasana, prasarita_padottanasana,
+  vajrasana, paschimottanasana, salamba_bhujangasana, supta_matsyendrasana,
   // 中级
   virabhadrasana_i, virabhadrasana_ii, trikonasana, utthita_parsvakonasana,
   plank, ardha_matsyendrasana, kapotasana, sarvangasana,
