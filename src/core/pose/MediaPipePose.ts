@@ -8,7 +8,7 @@ import type { PoseResult, PoseLandmark } from '@/types/pose'
 import { LandmarkSmoother, type SmootherState } from './LandmarkSmoother'
 import { AdvancedPreprocessor } from './AdvancedPreprocessor'
 import { fuseModelResults, type ModelResult } from './ModelFusion'
-import { RTMPoseEstimator, MoveNetEstimator, YOLOv8PoseEstimator } from './RTMPoseEstimator'
+import { RTMPoseEstimator, MoveNetEstimator, YOLOv8PoseEstimator } from './PoseEstimators'
 
 /** 平滑等级预设 */
 const SMOOTH_PRESETS: Record<number, { minCutoff: number; beta: number }> = {
