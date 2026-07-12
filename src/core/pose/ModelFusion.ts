@@ -28,41 +28,29 @@ export interface FusedResult {
 }
 
 /**
- * 关键点级加权投票
- * 每个关键点独立投票，按置信度加权
+ * 关键点级置信度优先选择
+ * 每个关键点选择置信度最高的模型结果（避免不同模型互相干扰）
  */
-function weightedVote(
+function confidenceBasedSelect(
   results: ModelResult[],
   landmarkIndex: number
 ): PoseLandmark {
-  let totalWeight = 0
-  let weightedX = 0
-  let weightedY = 0
-  let weightedZ = 0
-  let maxConfidence = 0
+  let bestLm: PoseLandmark | null = null
+  let bestScore = -1
 
   for (const result of results) {
     const lm = result.landmarks[landmarkIndex]
-    if (!lm || lm.visibility < 0.2) continue
+    if (!lm || lm.visibility < 0.1) continue
 
-    const weight = lm.visibility * result.confidence
-    totalWeight += weight
-    weightedX += lm.x * weight
-    weightedY += lm.y * weight
-    weightedZ += lm.z * weight
-    maxConfidence = Math.max(maxConfidence, lm.visibility)
+    // 综合分数 = 关键点置信度 × 模型置信度
+    const score = lm.visibility * result.confidence
+    if (score > bestScore) {
+      bestScore = score
+      bestLm = lm
+    }
   }
 
-  if (totalWeight === 0) {
-    return { x: 0, y: 0, z: 0, visibility: 0 }
-  }
-
-  return {
-    x: weightedX / totalWeight,
-    y: weightedY / totalWeight,
-    z: weightedZ / totalWeight,
-    visibility: maxConfidence,
-  }
+  return bestLm || { x: 0, y: 0, z: 0, visibility: 0 }
 }
 
 /**
@@ -132,20 +120,29 @@ function checkSkeletonConsistency(results: ModelResult[]): number {
  * 多模型投票融合
  */
 export function fuseModelResults(results: ModelResult[]): FusedResult | null {
-  if (results.length === 0) return null
-  if (results.length === 1) {
+  // 过滤无效结果
+  const validResults = results.filter(r => 
+    r.confidence > 0.1 && 
+    r.landmarks.some(lm => lm.visibility > 0.2)
+  )
+
+  if (validResults.length === 0) return null
+  if (validResults.length === 1) {
     return {
-      landmarks: results[0].landmarks,
-      confidence: results[0].confidence,
-      modelCounts: { [results[0].model]: 1 },
+      landmarks: validResults[0].landmarks,
+      confidence: validResults[0].confidence,
+      modelCounts: { [validResults[0].model]: 1 },
       agreement: 1,
     }
   }
 
-  // 关键点级融合
+  // 用有效结果替换原始结果
+  results = validResults
+
+  // 关键点级融合（置信度优先选择，避免模型互相干扰）
   const fusedLandmarks: PoseLandmark[] = []
   for (let i = 0; i < 33; i++) {
-    fusedLandmarks.push(weightedVote(results, i))
+    fusedLandmarks.push(confidenceBasedSelect(results, i))
   }
 
   // 计算模型一致性
