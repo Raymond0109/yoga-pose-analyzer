@@ -7,6 +7,7 @@ import { PoseLandmarker, FilesetResolver, type PoseLandmarkerResult } from '@med
 import type { PoseResult, PoseLandmark } from '@/types/pose'
 import { LandmarkSmoother, type SmootherState } from './LandmarkSmoother'
 import { AdvancedPreprocessor } from './AdvancedPreprocessor'
+import { fuseModelResults, type ModelResult } from './ModelFusion'
 
 /** 平滑等级预设 */
 const SMOOTH_PRESETS: Record<number, { minCutoff: number; beta: number }> = {
@@ -197,6 +198,47 @@ export class MediaPipePose {
       worldLandmarks,
       timestamp,
       confidence,
+    }
+  }
+
+  /**
+   * 多次运行融合（提高鲁棒性）
+   * 对同一图像运行多次检测，融合结果
+   */
+  estimateWithFusion(
+    image: HTMLVideoElement | HTMLImageElement,
+    timestamp: number,
+    runs: number = 3
+  ): PoseResult | null {
+    const results: ModelResult[] = []
+
+    for (let i = 0; i < runs; i++) {
+      const result = this.estimate(image, timestamp + i)
+      if (result) {
+        results.push({
+          landmarks: result.landmarks,
+          confidence: result.confidence ?? 0.5,
+          model: 'mediapipe',
+        })
+      }
+    }
+
+    if (results.length === 0) return null
+
+    // 融合结果
+    const fused = fuseModelResults(results)
+    if (!fused) return null
+
+    // 融合后的置信度过滤
+    if (fused.confidence < this.config.confidenceThreshold) {
+      return null
+    }
+
+    return {
+      landmarks: fused.landmarks,
+      worldLandmarks: fused.landmarks,
+      timestamp,
+      confidence: fused.confidence,
     }
   }
 
