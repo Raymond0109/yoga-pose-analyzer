@@ -8,6 +8,7 @@ import type { PoseResult, PoseLandmark } from '@/types/pose'
 import { LandmarkSmoother, type SmootherState } from './LandmarkSmoother'
 import { AdvancedPreprocessor } from './AdvancedPreprocessor'
 import { fuseModelResults, type ModelResult } from './ModelFusion'
+import { RTMPoseEstimator, MoveNetEstimator } from './RTMPoseEstimator'
 
 /** 平滑等级预设 */
 const SMOOTH_PRESETS: Record<number, { minCutoff: number; beta: number }> = {
@@ -21,7 +22,9 @@ const SMOOTH_PRESETS: Record<number, { minCutoff: number; beta: number }> = {
 export interface PoseEstimatorConfig {
   confidenceThreshold: number
   enableMoveNet: boolean
+  enableRTMPose: boolean
   enablePreprocessing: boolean
+  fusionRuns: number  // 融合运行次数
 }
 
 export class MediaPipePose {
@@ -29,12 +32,16 @@ export class MediaPipePose {
   private smoother: LandmarkSmoother
   private initialized = false
   private config: PoseEstimatorConfig
+  private moveNet: MoveNetEstimator | null = null
+  private rtmpose: RTMPoseEstimator | null = null
 
   constructor(config?: Partial<PoseEstimatorConfig>) {
     this.config = {
       confidenceThreshold: 0.2,
       enableMoveNet: false,
+      enableRTMPose: false,
       enablePreprocessing: false,
+      fusionRuns: 1,
       ...config,
     }
 
@@ -66,6 +73,7 @@ export class MediaPipePose {
   async initialize(wasmPath?: string): Promise<void> {
     if (this.initialized) return
 
+    // 初始化 MediaPipe
     const vision = await FilesetResolver.forVisionTasks(
       wasmPath ?? 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
     )
@@ -83,7 +91,20 @@ export class MediaPipePose {
       minTrackingConfidence: 0.2,
     })
 
+    // 初始化 MoveNet
+    if (this.config.enableMoveNet) {
+      this.moveNet = new MoveNetEstimator()
+      await this.moveNet.initialize()
+    }
+
+    // 初始化 RTMPose
+    if (this.config.enableRTMPose) {
+      this.rtmpose = new RTMPoseEstimator()
+      await this.rtmpose.initialize()
+    }
+
     this.initialized = true
+    console.log(`[MediaPipePose] Initialized: MediaPipe + ${this.config.enableMoveNet ? 'MoveNet' : ''} + ${this.config.enableRTMPose ? 'RTMPose' : ''}`)
   }
 
   /**
@@ -202,23 +223,45 @@ export class MediaPipePose {
   }
 
   /**
-   * 多次运行融合（提高鲁棒性）
-   * 对同一图像运行多次检测，融合结果
+   * 多模型融合估计
+   * 并行运行 MediaPipe + MoveNet + RTMPose，融合结果
    */
-  estimateWithFusion(
+  async estimateWithFusion(
     image: HTMLVideoElement | HTMLImageElement,
-    timestamp: number,
-    runs: number = 3
-  ): PoseResult | null {
+    timestamp: number
+  ): Promise<PoseResult | null> {
     const results: ModelResult[] = []
 
-    for (let i = 0; i < runs; i++) {
-      const result = this.estimate(image, timestamp + i)
-      if (result) {
+    // 1. MediaPipe 检测
+    const mpResult = this.estimate(image, timestamp)
+    if (mpResult) {
+      results.push({
+        landmarks: mpResult.landmarks,
+        confidence: mpResult.confidence ?? 0.5,
+        model: 'mediapipe',
+      })
+    }
+
+    // 2. MoveNet 检测（如果启用）
+    if (this.moveNet) {
+      const mnResult = await this.moveNet.estimate(image)
+      if (mnResult) {
         results.push({
-          landmarks: result.landmarks,
-          confidence: result.confidence ?? 0.5,
-          model: 'mediapipe',
+          landmarks: mnResult.landmarks,
+          confidence: mnResult.confidence,
+          model: 'movenet',
+        })
+      }
+    }
+
+    // 3. RTMPose 检测（如果启用）
+    if (this.rtmpose) {
+      const rtResult = await this.rtmpose.estimate(image)
+      if (rtResult) {
+        results.push({
+          landmarks: rtResult.landmarks,
+          confidence: rtResult.confidence,
+          model: 'rtmpose',
         })
       }
     }
@@ -255,6 +298,10 @@ export class MediaPipePose {
   dispose(): void {
     this.landmarker?.close()
     this.landmarker = null
+    this.moveNet?.dispose()
+    this.moveNet = null
+    this.rtmpose?.dispose()
+    this.rtmpose = null
     this.initialized = false
   }
 }
