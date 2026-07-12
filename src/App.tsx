@@ -590,6 +590,7 @@ export function App() {
               color: confidence >= 0.6 ? '#52c41a' : confidence >= 0.35 ? '#faad14' : '#ff4d4f',
             }}>
               置信度: {Math.round(confidence * 100)}%
+              {confidence < 0.35 && ' ⚠️'}
             </span>
           )}
           <span style={{
