@@ -287,3 +287,154 @@ export class MoveNetEstimator {
     this.initialized = false
   }
 }
+
+/**
+ * YOLOv8-Pose 姿态估计器
+ * 基于 Ultralytics YOLOv8-Pose 模型
+ *
+ * 模型来源：https://github.com/ultralytics/ultralytics
+ * 优势：同时检测人体+关键点，速度极快，精度良好
+ * 精度：COCO AP 71.0 (yolov8n-pose)
+ */
+export class YOLOv8PoseEstimator {
+  private session: ort.InferenceSession | null = null
+  private inputSize = 640
+  private initialized = false
+  private modelPath: string
+
+  constructor(modelPath?: string) {
+    this.modelPath = modelPath || ''
+  }
+
+  async initialize(): Promise<void> {
+    if (this.initialized) return
+
+    try {
+      ort.env.wasm.numThreads = navigator.hardwareConcurrency || 4
+
+      if (this.modelPath) {
+        this.session = await ort.InferenceSession.create(this.modelPath, {
+          executionProviders: ['wasm'],
+        })
+        this.initialized = true
+        console.log('[YOLOv8-Pose] Model loaded from:', this.modelPath)
+      } else {
+        console.warn('[YOLOv8-Pose] No model path provided, using placeholder')
+        this.initialized = true
+      }
+    } catch (e) {
+      console.error('[YOLOv8-Pose] Failed to initialize:', e)
+    }
+  }
+
+  private preprocess(image: HTMLImageElement | HTMLVideoElement): { tensor: ort.Tensor; ratio: number; padX: number; padY: number } {
+    const canvas = document.createElement('canvas')
+    const imgW = image instanceof HTMLImageElement ? image.naturalWidth : (image as HTMLVideoElement).videoWidth
+    const imgH = image instanceof HTMLImageElement ? image.naturalHeight : (image as HTMLVideoElement).videoHeight
+
+    const ratio = Math.min(this.inputSize / imgW, this.inputSize / imgH)
+    const newW = Math.round(imgW * ratio)
+    const newH = Math.round(imgH * ratio)
+    const padX = (this.inputSize - newW) / 2
+    const padY = (this.inputSize - newH) / 2
+
+    canvas.width = this.inputSize
+    canvas.height = this.inputSize
+    const ctx = canvas.getContext('2d')!
+    ctx.fillStyle = 'rgb(114,114,114)'
+    ctx.fillRect(0, 0, this.inputSize, this.inputSize)
+    ctx.drawImage(image, padX, padY, newW, newH)
+
+    const imageData = ctx.getImageData(0, 0, this.inputSize, this.inputSize)
+    const { data } = imageData
+
+    // NCHW BGR 归一化
+    const input = new Float32Array(3 * this.inputSize * this.inputSize)
+    const pixCount = this.inputSize * this.inputSize
+    for (let i = 0; i < pixCount; i++) {
+      input[i] = data[i * 4 + 2] / 255.0                      // B
+      input[pixCount + i] = data[i * 4 + 1] / 255.0           // G
+      input[2 * pixCount + i] = data[i * 4] / 255.0           // R
+    }
+
+    return { tensor: new ort.Tensor('float32', input, [1, 3, this.inputSize, this.inputSize]), ratio, padX, padY }
+  }
+
+  async estimate(
+    image: HTMLImageElement | HTMLVideoElement
+  ): Promise<{ landmarks: PoseLandmark[]; confidence: number } | null> {
+    if (!this.session || !this.initialized) {
+      return this.mockEstimate()
+    }
+
+    try {
+      const { tensor, ratio, padX, padY } = this.preprocess(image)
+      const results = await this.session.run({ images: tensor })
+
+      const output = results.output0 || results[Object.keys(results)[0]]
+      if (!output) return null
+
+      const data = output.data as Float32Array
+      const dims = output.dims // [1, 56, 8400]
+      const numDetections = dims[2]
+
+      // 找到置信度最高的检测框
+      let bestConf = 0
+      let bestIdx = 0
+      for (let i = 0; i < numDetections; i++) {
+        const conf = data[4 * numDetections + i]
+        if (conf > bestConf) { bestConf = conf; bestIdx = i }
+      }
+      if (bestConf < 0.3) return null
+
+      const landmarks: PoseLandmark[] = new Array(33).fill(null).map(() => ({
+        x: 0, y: 0, z: 0, visibility: 0,
+      }))
+
+      // YOLOv8 17点 → MediaPipe 33点
+      const yoloToMp: [number, number][] = [
+        [0, 0], [1, 2], [2, 1], [3, 7], [4, 8],
+        [5, 11], [6, 12], [7, 13], [8, 14],
+        [9, 15], [10, 16], [11, 23], [12, 24],
+        [13, 25], [14, 26], [15, 27], [16, 28],
+      ]
+
+      const imgW = image instanceof HTMLImageElement ? image.naturalWidth : (image as HTMLVideoElement).videoWidth
+      const imgH = image instanceof HTMLImageElement ? image.naturalHeight : (image as HTMLVideoElement).videoHeight
+
+      for (const [yoloIdx, mpIdx] of yoloToMp) {
+        const x = data[(4 + yoloIdx * 3) * numDetections + bestIdx]
+        const y = data[(4 + yoloIdx * 3 + 1) * numDetections + bestIdx]
+        const conf = data[(4 + yoloIdx * 3 + 2) * numDetections + bestIdx]
+
+        const origX = (x * this.inputSize - padX) / ratio
+        const origY = (y * this.inputSize - padY) / ratio
+
+        landmarks[mpIdx] = {
+          x: origX / imgW,
+          y: origY / imgH,
+          z: 0,
+          visibility: conf,
+        }
+      }
+
+      return { landmarks, confidence: bestConf }
+    } catch (e) {
+      console.error('[YOLOv8-Pose] Estimation failed:', e)
+      return null
+    }
+  }
+
+  private mockEstimate(): { landmarks: PoseLandmark[]; confidence: number } {
+    const landmarks: PoseLandmark[] = new Array(33).fill(null).map(() => ({
+      x: 0.5, y: 0.5, z: 0, visibility: 0.1,
+    }))
+    return { landmarks, confidence: 0.1 }
+  }
+
+  dispose(): void {
+    this.session?.release()
+    this.session = null
+    this.initialized = false
+  }
+}

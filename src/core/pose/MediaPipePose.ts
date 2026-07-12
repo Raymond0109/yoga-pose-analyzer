@@ -8,7 +8,7 @@ import type { PoseResult, PoseLandmark } from '@/types/pose'
 import { LandmarkSmoother, type SmootherState } from './LandmarkSmoother'
 import { AdvancedPreprocessor } from './AdvancedPreprocessor'
 import { fuseModelResults, type ModelResult } from './ModelFusion'
-import { RTMPoseEstimator, MoveNetEstimator } from './RTMPoseEstimator'
+import { RTMPoseEstimator, MoveNetEstimator, YOLOv8PoseEstimator } from './RTMPoseEstimator'
 
 /** 平滑等级预设 */
 const SMOOTH_PRESETS: Record<number, { minCutoff: number; beta: number }> = {
@@ -23,6 +23,7 @@ export interface PoseEstimatorConfig {
   confidenceThreshold: number
   enableMoveNet: boolean
   enableRTMPose: boolean
+  enableYOLOv8: boolean
   enablePreprocessing: boolean
   fusionRuns: number  // 融合运行次数
 }
@@ -34,6 +35,7 @@ export class MediaPipePose {
   private config: PoseEstimatorConfig
   private moveNet: MoveNetEstimator | null = null
   private rtmpose: RTMPoseEstimator | null = null
+  private yolov8: YOLOv8PoseEstimator | null = null
 
   constructor(config?: Partial<PoseEstimatorConfig>) {
     this.config = {
@@ -103,8 +105,18 @@ export class MediaPipePose {
       await this.rtmpose.initialize()
     }
 
+    // 初始化 YOLOv8
+    if (this.config.enableYOLOv8) {
+      this.yolov8 = new YOLOv8PoseEstimator()
+      await this.yolov8.initialize()
+    }
+
     this.initialized = true
-    console.log(`[MediaPipePose] Initialized: MediaPipe + ${this.config.enableMoveNet ? 'MoveNet' : ''} + ${this.config.enableRTMPose ? 'RTMPose' : ''}`)
+    const models = ['MediaPipe']
+    if (this.config.enableMoveNet) models.push('MoveNet')
+    if (this.config.enableRTMPose) models.push('RTMPose')
+    if (this.config.enableYOLOv8) models.push('YOLOv8')
+    console.log(`[MediaPipePose] Initialized: ${models.join(' + ')}`)
   }
 
   /**
@@ -266,6 +278,18 @@ export class MediaPipePose {
       }
     }
 
+    // 4. YOLOv8 检测（如果启用）
+    if (this.yolov8) {
+      const yoloResult = await this.yolov8.estimate(image)
+      if (yoloResult) {
+        results.push({
+          landmarks: yoloResult.landmarks,
+          confidence: yoloResult.confidence,
+          model: 'yolov8',
+        })
+      }
+    }
+
     if (results.length === 0) return null
 
     // 融合结果
@@ -302,6 +326,8 @@ export class MediaPipePose {
     this.moveNet = null
     this.rtmpose?.dispose()
     this.rtmpose = null
+    this.yolov8?.dispose()
+    this.yolov8 = null
     this.initialized = false
   }
 }

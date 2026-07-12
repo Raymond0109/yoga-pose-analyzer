@@ -32,7 +32,8 @@ async function getPoseEstimator(): Promise<MediaPipePose> {
   if (!poseEstimator) {
     poseEstimator = new MediaPipePose({
       enableMoveNet: true,
-      enableRTMPose: false,  // RTMPose 需要模型文件，暂时关闭
+      enableRTMPose: false,  // 需要 ONNX 模型文件
+      enableYOLOv8: false,   // 需要 ONNX 模型文件
     })
     await poseEstimator.initialize()
   }
