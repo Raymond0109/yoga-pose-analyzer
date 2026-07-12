@@ -508,20 +508,18 @@ export function App() {
       const ctx = canvas.getContext('2d')
       if (!ctx) return
 
-      const width = (source as HTMLVideoElement).videoWidth || (source as HTMLImageElement).naturalWidth || 640
-      const height = (source as HTMLVideoElement).videoHeight || (source as HTMLImageElement).naturalHeight || 480
+      const imgWidth = (source as HTMLVideoElement).videoWidth || (source as HTMLImageElement).naturalWidth || 640
+      const imgHeight = (source as HTMLVideoElement).videoHeight || (source as HTMLImageElement).naturalHeight || 480
 
-      // 使用固定分辨率，避免缩放导致线条变细
-      const displayWidth = canvas.clientWidth || width
-      const displayHeight = canvas.clientHeight || height
-      canvas.width = displayWidth
-      canvas.height = displayHeight
+      // 使用图片原始分辨率，保持比例
+      canvas.width = imgWidth
+      canvas.height = imgHeight
 
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-      // 如果是图片源，先绘制图片到 canvas
+      // 如果是图片源，按原始比例绘制
       if (source instanceof HTMLImageElement) {
-        ctx.drawImage(source, 0, 0, canvas.width, canvas.height)
+        ctx.drawImage(source, 0, 0, imgWidth, imgHeight)
       }
 
       // 绘制关键点

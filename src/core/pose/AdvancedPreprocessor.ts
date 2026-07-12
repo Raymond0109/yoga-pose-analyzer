@@ -109,7 +109,7 @@ export class AdvancedPreprocessor {
   }
 
   /**
-   * 增强肤色区域（简化版）
+   * 增强肤色区域（保留原色，只微调对比度）
    */
   static enhanceSkinTones(imageData: ImageData): ImageData {
     const { data } = imageData
@@ -118,25 +118,12 @@ export class AdvancedPreprocessor {
     for (let i = 0; i < data.length; i += 4) {
       const r = data[i], g = data[i + 1], b = data[i + 2]
 
-      // 检测类肤色区域（红色/橙色/棕色系）
-      const isSkinLike = (
-        r > 100 && g > 60 && b > 40 &&
-        r > g && r > b &&
-        (r - g) > 15 && (r - b) > 15
-      )
-
-      if (isSkinLike) {
-        // 增强对比度，让肤色更明显
-        output[i] = Math.min(255, r * 1.2)
-        output[i + 1] = Math.min(255, g * 1.1)
-        output[i + 2] = Math.min(255, b * 0.9)
-      } else {
-        // 降低非肤色区域的饱和度
-        const gray = r * 0.299 + g * 0.587 + b * 0.114
-        output[i] = r + (gray - r) * 0.5
-        output[i + 1] = g + (gray - g) * 0.5
-        output[i + 2] = b + (gray - b) * 0.5
-      }
+      // 轻微增强对比度（不改变色调）
+      const factor = 1.05
+      output[i] = Math.min(255, r * factor)
+      output[i + 1] = Math.min(255, g * factor)
+      output[i + 2] = Math.min(255, b * factor)
+      output[i + 3] = data[i + 3]
     }
 
     return new ImageData(output, data.length / 4)
