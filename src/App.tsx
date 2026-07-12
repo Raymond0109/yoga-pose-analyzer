@@ -30,7 +30,10 @@ function getScorer(): PoseScorer {
 
 async function getPoseEstimator(): Promise<MediaPipePose> {
   if (!poseEstimator) {
-    poseEstimator = new MediaPipePose()
+    poseEstimator = new MediaPipePose({
+      enableMoveNet: true,
+      enableRTMPose: false,  // RTMPose 需要模型文件，暂时关闭
+    })
     await poseEstimator.initialize()
   }
   return poseEstimator
@@ -246,7 +249,7 @@ export function App() {
         lastProcessTime.current = now
 
         const estimator = await getPoseEstimator()
-        const result = estimator.estimate(frame.imageData as any, frame.timestamp)
+        const result = await estimator.estimateWithFusion(frame.imageData as any, frame.timestamp)
 
         if (result) {
           setCurrentPose(result)
@@ -354,7 +357,7 @@ export function App() {
 
         // 图片加载完成后进行姿态估计
         const estimator = await getPoseEstimator()
-        const result = estimator.estimate(imgEl, performance.now())
+        const result = await estimator.estimateWithFusion(imgEl, performance.now())
 
         if (result) {
           setCurrentPose(result)
@@ -437,7 +440,7 @@ export function App() {
         lastProcessTime.current = now
 
         const estimator = await getPoseEstimator()
-        const result = estimator.estimate(frame.imageData as any, frame.timestamp)
+        const result = await estimator.estimateWithFusion(frame.imageData as any, frame.timestamp)
 
         if (result) {
           setCurrentPose(result)
