@@ -119,22 +119,35 @@ export class MediaPipePose {
 
   /**
    * 检测是否为解剖图
+   * 解剖图特征：大面积红色/橙色肌肉纹理，无真人皮肤色
    */
   private detectAnatomyImage(imageData: ImageData): boolean {
-    const { data, width, height } = imageData
-    let redCount = 0, totalPixels = 0
+    const { data } = imageData
+    let redOrangeCount = 0
+    let skinColorCount = 0
+    let totalPixels = 0
 
     // 采样检查
-    for (let i = 0; i < data.length; i += 16) { // 每4像素采样一次
+    for (let i = 0; i < data.length; i += 32) {
       const r = data[i], g = data[i + 1], b = data[i + 2]
       totalPixels++
-      // 红色/橙色/棕色系（解剖图的肌肉颜色）
-      if (r > 120 && g > 40 && b < 150 && r > g * 1.2) {
-        redCount++
+
+      // 解剖图肌肉颜色：红/橙/棕色（饱和度高，偏红）
+      if (r > 120 && g > 40 && b < 120 && r > g * 1.3 && r > b * 1.5) {
+        redOrangeCount++
+      }
+
+      // 真人皮肤色：偏黄/粉，饱和度适中
+      if (r > 150 && g > 100 && b > 80 && r > g && g > b) {
+        skinColorCount++
       }
     }
 
-    return redCount / totalPixels > 0.15 // 超过15%的红色区域
+    const redRatio = redOrangeCount / totalPixels
+    const skinRatio = skinColorCount / totalPixels
+
+    // 解剖图：红色区域大，皮肤色区域小
+    return redRatio > 0.2 && skinRatio < 0.1
   }
 
   estimate(
